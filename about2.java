@@ -4,6 +4,8 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import java.awt.Image;
 import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.Graphics;
 import java.io.File;
 
@@ -17,7 +19,7 @@ public class about2 extends JFrame {
 
     public static void main(String[] args) {
         about abt2 = new about();
-        panalAbout2 pAbout2 = new panalAbout2();
+        panalAbout2 pAbout2 = new panalAbout2(abt2);
         abt2.add(pAbout2);
         abt2.setVisible(true);
     }
@@ -31,7 +33,9 @@ class panalAbout2 extends JPanel {
     JButton button3;
     JButton button4;
 
-    panalAbout2() {
+    about abt2 ;
+
+    panalAbout2(about abt2 ) {
 
         ImageIcon icon3 = new ImageIcon(System.getProperty("user.dir") + File.separator + "bb1.png");
         ImageIcon icon4 = new ImageIcon(System.getProperty("user.dir") + File.separator + "bb3.png");
@@ -56,6 +60,32 @@ class panalAbout2 extends JPanel {
         // เพิ่มปุ่มทั้งสองลงใน JPanel
         add(button3);
         add(button4);
+
+        button3.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                menugame MenuGame1 = new menugame();
+                MenuGame1.setVisible(true);
+                abt2.dispose();
+            }
+            
+        });
+
+        button4.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                about about1 = new about();
+                about1.setVisible(true);
+                abt2.dispose();
+            }
+            
+        });
+
+        
+
+       
     }
 
     @Override
