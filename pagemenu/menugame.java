@@ -9,18 +9,15 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 
 class menugame extends JFrame {
+    panelMenu panel = new panelMenu(this);
+
     menugame() {
         setSize(1440, 810);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        add(panel);
     }
 
-    public static void main(String[] args) {
-        menugame menu = new menugame();
-        panelMenu panel = new panelMenu(menu);
-        menu.add(panel);
-        menu.setVisible(true);
-    }
 }
 
 class panelMenu extends JPanel {
