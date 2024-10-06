@@ -66,7 +66,7 @@ class panelMenu extends JPanel {
             @Override
             public void actionPerformed(ActionEvent e) {
                 about aboutgame = new about();
-                about.setVisible(true);
+                aboutgame.setVisible(true);
                 menu.dispose();
             }
 
