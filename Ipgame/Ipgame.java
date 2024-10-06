@@ -3,6 +3,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Image;
@@ -36,16 +37,20 @@ class CustomPanel extends JPanel {
     JTextField textip = new JTextField();
     JButton[] buttons = new JButton[5]; // Array to hold 5 buttons
     JButton enter;
+    JButton back;
 
     CustomPanel() {
+        setSize(1440, 810);
         bg = Toolkit.getDefaultToolkit().createImage(System.getProperty("user.dir") +
         File.separator + "imagecharacter" + File.separator + "bg.png");
 
         // Configure text fields
-        textname.setBounds(255, 55, 350, 70); 
-        textip.setBounds(935, 55, 350, 70); 
-        textname.setFont(new Font("monbait", Font.PLAIN, 30));
-        textip.setFont(new Font("Monospaced", Font.PLAIN, 30));
+        textname.setBounds(275, 55, 350, 70); 
+        textip.setBounds(980, 55, 350, 70); 
+        textip.setBackground(new Color(255,212,131));
+        textname.setBackground(new Color(255,212,131));
+        textname.setFont(new Font("Arial Black", Font.PLAIN, 30));
+        textip.setFont(new Font("Arial Black", Font.PLAIN, 30));
         add(textname);
         add(textip);
 
@@ -55,7 +60,7 @@ class CustomPanel extends JPanel {
                                 File.separator +"imagecharacter"+ File.separator + (i + 1) + ".png"); 
                 Image scaledImage = character.getImage().getScaledInstance(1300, 800, Image.SCALE_SMOOTH); // Adjust the size here
                 buttons[i] = new JButton(new ImageIcon(scaledImage)); 
-                buttons[i].setBounds(70 + (i * 250), 280, 220, 320); 
+                buttons[i].setBounds(75 + (i * 260), 280, 220, 320); 
                 
     
                 buttons[i].setContentAreaFilled(false);
@@ -70,6 +75,12 @@ class CustomPanel extends JPanel {
             enter.setBounds(600, 630, 150, 90);
             add(enter);
 
+            ImageIcon icon2 = new ImageIcon(System.getProperty("user.dir") + 
+            File.separator + "imagecharacter" + File.separator + "back.png"); 
+            Image icoImage2 = icon2.getImage().getScaledInstance(100, 50, Image.SCALE_SMOOTH);
+            back =new JButton(new ImageIcon(icoImage2));
+            back.setBounds(0, 700, 90, 60);
+            add(back);
     }
 
     @Override
