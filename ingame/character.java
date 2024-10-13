@@ -1,8 +1,7 @@
-import java.awt.Graphics;
-import java.awt.Image;
+
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import javax.swing.ImageIcon;
+
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -29,6 +28,7 @@ class PanelCharacter extends JPanel {
     JTextField textcha;
     String text = " ";
     character Fchr;
+   
 
     PanelCharacter(character Fchr) {
         this.Fchr = Fchr;
@@ -59,6 +59,5 @@ class PanelCharacter extends JPanel {
     // เมธอดสำหรับพิมพ์ค่า
     private void printText() {
         System.out.println("Text entered: " + text); // พิมพ์ค่าที่เก็บไว้
-    }
-
+    } 
 }
