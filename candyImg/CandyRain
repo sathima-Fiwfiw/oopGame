@@ -1,98 +1,83 @@
-import javax.swing.ImageIcon;
-import javax.swing.JFrame;
-import java.awt.Canvas;
-import java.awt.Graphics;
-import java.awt.Image;
-import java.awt.image.BufferStrategy;
+import javax.swing.*;
+import java.awt.*;
 import java.util.Random;
 
 public class CandyRain extends JFrame {
     CandyFall[] candyFall = new CandyFall[12]; // สร้างอาร์เรย์สำหรับ CandyFall
-    Image[] candyImages = new Image[12]; // เปลี่ยนเป็น 11 ตามจำนวนรูปภาพที่ต้องการ
+    JLabel[] candyLabels = new JLabel[12]; // ใช้ JLabel สำหรับแสดงภาพ
     int[] yPositions = new int[12]; // เก็บตำแหน่ง y ของแต่ละภาพ
     int[] xPositions = new int[12]; // เก็บตำแหน่ง x ของแต่ละภาพ
     int[] speeds = new int[12]; // เก็บความเร็วในการตกของแต่ละรูป
     Random random = new Random();
 
+    // ตั้งค่าขนาดที่ต้องการสำหรับรูปภาพ
+    int candyWidth = 300; // กว้าง 100 พิกเซล
+    int candyHeight = 200; // สูง 100 พิกเซล
+
     public static void main(String[] args) {
-        CandyRain candyRain = new CandyRain();
-        candyRain.setVisible(true);
-        for (CandyFall fall : candyRain.candyFall) {
-            fall.start(); // เริ่ม Thread สำหรับการตกของ Candy
-        }
+        SwingUtilities.invokeLater(() -> {
+            CandyRain candyRain = new CandyRain();
+            candyRain.setVisible(true);
+            for (CandyFall fall : candyRain.candyFall) {
+                fall.start(); // เริ่ม Thread สำหรับการตกของ Candy
+            }
+        });
     }
 
     CandyRain() {
         setSize(1440, 810);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLayout(null); // ใช้ null layout เพื่อกำหนดตำแหน่งเอง
 
-        // สร้าง Canvas เพื่อวาดภาพ
-        Canvas canvas = new Canvas();
-        canvas.setSize(1000, 500);
-        this.add(canvas);
-        canvas.setFocusable(false);
-
-        // โหลดรูปภาพในอาเรย์
-        for (int i = 0; i < candyImages.length; i++) {
+        // โหลดรูปภาพในอาเรย์และสร้าง JLabel
+        for (int i = 0; i < candyLabels.length; i++) {
             ImageIcon candyIcon = new ImageIcon("C:/oopProjactGram/candy/" + (i + 1) + ".png");
-            candyImages[i] = candyIcon.getImage();
+            Image candyImage = candyIcon.getImage().getScaledInstance(candyWidth, candyHeight, Image.SCALE_SMOOTH);
+            candyLabels[i] = new JLabel(new ImageIcon(candyImage)); // ใช้ ImageIcon เพื่อแสดงภาพ
+            candyLabels[i].setSize(candyWidth, candyHeight); // ตั้งขนาด JLabel ให้ตรงกับขนาดรูปภาพ
+            xPositions[i] = random.nextInt(getWidth() - 200); // ตั้งค่าตำแหน่ง x สุ่ม
+            yPositions[i] = -candyHeight; // เริ่มจากตำแหน่ง y ที่ 0
+            speeds[i] = 5 + random.nextInt(10); // สุ่มความเร็วระหว่าง 1 ถึง 10
 
-            xPositions[i] = random.nextInt(getWidth()); // ตั้งค่าตำแหน่ง x สุ่มตามความกว้างของหน้าจอ
-            yPositions[i] = 0; // เริ่มจากตำแหน่ง y ที่ 0
-            speeds[i] = 1 + random.nextInt(10); // สุ่มความเร็วระหว่าง 1 ถึง 10
+            // ตั้งตำแหน่งเริ่มต้นของ JLabel
+            candyLabels[i].setLocation(xPositions[i], yPositions[i]);
+            add(candyLabels[i]); // เพิ่ม JLabel ลงใน JFrame
 
             // สร้าง Thread สำหรับแต่ละ CandyFall
-            candyFall[i] = new CandyFall(this, i, canvas);
+            candyFall[i] = new CandyFall(this, i);
         }
+    }
+
+    // Method สำหรับการอัปเดตตำแหน่งของ Candy
+    public void updateCandyPosition(int index) {
+        yPositions[index] += speeds[index]; // อัปเดตตำแหน่ง y
+
+        // ถ้ารูปตกลงมาจนถึงด้านล่างของหน้าจอ ให้เริ่มต้นใหม่จากด้านบน
+        if (yPositions[index] > getHeight()) {
+            yPositions[index] = -candyHeight; // เริ่มใหม่จากตำแหน่ง y ที่ 0
+            xPositions[index] = random.nextInt(getWidth() - 200); // สุ่มตำแหน่ง x ใหม่
+            speeds[index] = 5 + random.nextInt(10); // สุ่มความเร็วใหม่ระหว่าง 1 ถึง 10
+        }
+
+        // ปรับตำแหน่ง JLabel
+        candyLabels[index].setLocation(xPositions[index], yPositions[index]);
     }
 }
 
 class CandyFall extends Thread {
     CandyRain candyRain; // ตัวแปรสำหรับคลาส CandyRain
     int index; // ตัวแปรเก็บตำแหน่งของ CandyFall ในอาร์เรย์
-    Canvas canvas; // ตัวแปร Canvas สำหรับการวาดภาพ
 
-    public CandyFall(CandyRain candyRain, int index, Canvas canvas) {
+    public CandyFall(CandyRain candyRain, int index) {
         this.candyRain = candyRain;
         this.index = index;
-        this.canvas = canvas;
     }
 
     @Override
     public void run() {
         while (true) {
-            // อัพเดตตำแหน่ง y ของ candy ตามความเร็วที่กำหนด
-            candyRain.yPositions[index] += candyRain.speeds[index];
-
-            // ถ้ารูปตกลงมาจนถึงด้านล่างของหน้าจอ ให้เริ่มต้นใหม่จากด้านบน
-            if (candyRain.yPositions[index] > candyRain.getHeight()) {
-
-                candyRain.yPositions[index] = 0; // เริ่มใหม่จากตำแหน่ง y ที่ 0
-                candyRain.xPositions[index] = candyRain.random.nextInt(candyRain.getWidth()); // สุ่มตำแหน่ง x ใหม่
-                candyRain.speeds[index] = 1 + candyRain.random.nextInt(10); // สุ่มความเร็วใหม่ระหว่าง 1 ถึง 10
-            }
-
-            // ใช้ BufferStrategy ในการวาดภาพ
-            BufferStrategy bufferStrategy = canvas.getBufferStrategy();
-            if (bufferStrategy == null) {
-
-                canvas.createBufferStrategy(2);
-                continue;
-            }
-
-            Graphics g = bufferStrategy.getDrawGraphics();
-            g.clearRect(0, 0, canvas.getWidth(), canvas.getHeight()); // ล้างหน้าจอ
-
-            // วาดรูปภาพแต่ละรูปจากอาเรย์ในตำแหน่ง x และ y
-            for (int i = 0; i < candyRain.candyImages.length; i++) {
-                if (candyRain.candyImages[i] != null) {
-                    g.drawImage(candyRain.candyImages[i], candyRain.xPositions[i], candyRain.yPositions[i], 200, 200,
-                            canvas); // ขนาดรูปภาพเป็น 100x100
-                }
-            }
-
-            bufferStrategy.show();
+            candyRain.updateCandyPosition(index); // อัปเดตตำแหน่ง
 
             // หยุดระยะเวลาสั้นๆ เพื่อไม่ให้ใช้ CPU มากเกินไป
             try {
@@ -103,4 +88,3 @@ class CandyFall extends Thread {
         }
     }
 }
-
