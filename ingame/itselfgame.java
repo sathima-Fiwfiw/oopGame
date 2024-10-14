@@ -34,7 +34,9 @@ class PanelGame extends JPanel implements MouseMotionListener,MouseListener {
     itselfgame ingame;
     Image[] character = new Image[5];
     Image bg,hand;
-    int movecharacter = 0, jumpcharacter = 550;
+    int movecharacter = 0, characterY = 540;
+    int characterHeigth = 250;
+    int c01Width = 200, c02Width = 150, c03Width = 150, c04Width = 120, c05Width = 160;
     boolean isJumping = false;
     boolean ishand = true;
     Timer jumpTimer;
@@ -54,20 +56,20 @@ class PanelGame extends JPanel implements MouseMotionListener,MouseListener {
             character[i] = new ImageIcon("C:/oopGame/imageip/" + (i + 1) + ".png").getImage(); 
         }
 
-        handX = random.nextInt(1100) + 100; 
+        handX = random.nextInt(1100) + 10; 
         jumpTimer = new Timer(20, new ActionListener() {
         
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (jumpingUp) {
-                    jumpcharacter -= 10; // กระโดดขึ้น
-                    if (jumpcharacter <= 400) { // ถึงจุดสูงสุดแล้ว
+                    characterY -= 10; // กระโดดขึ้น
+                    if (characterY <= 400) { // ถึงจุดสูงสุดแล้ว
                         jumpingUp = false; // เปลี่ยนทิศทางไปลง
                     }
                 } else {
-                    jumpcharacter += 10; // ลง
-                    if (jumpcharacter >= 550) { // ถึงพื้นแล้ว
-                        jumpcharacter = 550; // รีเซ็ตตำแหน่ง
+                    characterY += 10; // ลง
+                    if (characterY >= 540) { // ถึงพื้นแล้ว
+                        characterY = 540; // รีเซ็ตตำแหน่ง
                         isJumping = false; // รีเซ็ต flag ว่ากระโดดเสร็จแล้ว
                         jumpTimer.stop(); // หยุด timer
                     }
@@ -81,7 +83,7 @@ class PanelGame extends JPanel implements MouseMotionListener,MouseListener {
             public void actionPerformed(ActionEvent e) {
                 ishand = !ishand; // สลับสถานะการแสดงมือ
                 if (ishand) {
-                    handX = random.nextInt(1100) + 100; // กำหนดตำแหน่งมือใหม่แบบสุ่ม
+                    handX = random.nextInt(1100) + 10; // กำหนดตำแหน่งมือใหม่แบบสุ่ม
                 }
                 repaint(); // วาดใหม่ทุกครั้ง
             }
@@ -95,15 +97,15 @@ class PanelGame extends JPanel implements MouseMotionListener,MouseListener {
         super.paintComponent(g);
         g.drawImage(bg, 0, 0, this);
         if ("c01".equals(ingame.textcha)) {
-            g.drawImage(character[0], movecharacter-160, jumpcharacter, 200, 250, this);
+            g.drawImage(character[0], movecharacter-100, characterY, c01Width, characterHeigth, this);
         } else if ("c02".equals(ingame.textcha)) {
-            g.drawImage(character[1], movecharacter-112, jumpcharacter, 200, 250, this);
+            g.drawImage(character[1], movecharacter-112, characterY, c02Width, characterHeigth, this);
         } else if ("c03".equals(ingame.textcha)) {
-            g.drawImage(character[2], movecharacter-89, jumpcharacter, 200, 250, this);
+            g.drawImage(character[2], movecharacter-89, characterY, c03Width, characterHeigth, this);
         } else if ("c04".equals(ingame.textcha)) {
-            g.drawImage(character[3], movecharacter-96, jumpcharacter, 200, 250, this);
+            g.drawImage(character[3], movecharacter-90, characterY, c04Width, characterHeigth, this);
         } else if ("c05".equals(ingame.textcha)) {
-            g.drawImage(character[4], movecharacter-125, jumpcharacter, 200, 250, this);
+            g.drawImage(character[4], movecharacter-125, characterY, c05Width, characterHeigth, this);
         }
         if(ishand){
             g.drawImage(hand, handX , handY, handWidth, handHeight, this);
@@ -117,16 +119,16 @@ class PanelGame extends JPanel implements MouseMotionListener,MouseListener {
     @Override
     public void mouseMoved(MouseEvent e) {
         movecharacter = e.getX();
-       // checkCollision();
+        checkCollision();
         
 
         // ตัวละคร c01 - เช็คขอบ
         if ("c01".equals(ingame.textcha)) {
-            if (movecharacter - 155 < 0) { // ขอบซ้าย
-                movecharacter = 155;
+            if (movecharacter - 100 < 0) { // ขอบซ้าย
+                movecharacter = 100;
             }
-            if (movecharacter + 40 > this.getWidth()) { // ขอบขวา
-                movecharacter = this.getWidth() - 40;
+            if (movecharacter + 90 > this.getWidth()) { // ขอบขวา
+                movecharacter = this.getWidth() - 90;
             }
         }
         // ตัวละคร c02 - เช็คขอบ
@@ -134,8 +136,8 @@ class PanelGame extends JPanel implements MouseMotionListener,MouseListener {
             if (movecharacter - 110 < 0) { // ขอบซ้าย
                 movecharacter = 110;
             }
-            if (movecharacter + 90 > this.getWidth()) { // ขอบขวา
-                movecharacter = this.getWidth() - 90;
+            if (movecharacter + 40 > this.getWidth()) { // ขอบขวา
+                movecharacter = this.getWidth() - 40;
             }
         }
         // ตัวละคร c03 - เช็คขอบ
@@ -143,8 +145,8 @@ class PanelGame extends JPanel implements MouseMotionListener,MouseListener {
             if (movecharacter - 90 < 0) { // ขอบซ้าย
                 movecharacter = 90;
             }
-            if (movecharacter + 105 > this.getWidth()) { // ขอบขวา
-                movecharacter = this.getWidth() - 105;
+            if (movecharacter + 65 > this.getWidth()) { // ขอบขวา
+                movecharacter = this.getWidth() - 65;
             }
         }
         // ตัวละคร c04 - เช็คขอบ
@@ -152,17 +154,17 @@ class PanelGame extends JPanel implements MouseMotionListener,MouseListener {
             if (movecharacter - 95 < 0) { // ขอบซ้าย
                 movecharacter = 95;
             }
-            if (movecharacter + 100 > this.getWidth()) { // ขอบขวา
-                movecharacter = this.getWidth() - 100;
+            if (movecharacter + 30 > this.getWidth()) { // ขอบขวา
+                movecharacter = this.getWidth() - 30;
             }
         }
         // ตัวละคร c05 - เช็คขอบ
         else if ("c05".equals(ingame.textcha)) {
-            if (movecharacter - 115 < 0) { // ขอบซ้าย
-                movecharacter = 115;
+            if (movecharacter - 125 < 0) { // ขอบซ้าย
+                movecharacter = 125;
             }
-            if (movecharacter + 70 > this.getWidth()) { // ขอบขวา
-                movecharacter = this.getWidth() - 70;
+            if (movecharacter + 40 > this.getWidth()) { // ขอบขวา
+                movecharacter = this.getWidth() - 40;
             }
         }
 
@@ -174,7 +176,7 @@ class PanelGame extends JPanel implements MouseMotionListener,MouseListener {
         if (!isJumping) { // ตรวจสอบว่ากำลังไม่กระโดดอยู่
             isJumping = true; // ตั้งค่าให้กำลังกระโดด
             jumpingUp = true;
-            jumpcharacter = 550; // เริ่มที่พื้น
+            characterY = 540; // เริ่มที่พื้น
             jumpTimer.start(); // เริ่ม timer
         }
     }
@@ -192,33 +194,58 @@ class PanelGame extends JPanel implements MouseMotionListener,MouseListener {
     public void mouseExited(MouseEvent e) {}
 
     void checkCollision() {
-        // ปรับขนาดขอบเขตของตัวละครให้ตรงกับขนาดจริงที่มองเห็น
-        int characterVisibleWidth = 500; // สมมติว่าตัวละครจริงกินพื้นที่แค่ 500px ในภาพ 960px
-        int characterVisibleHeight = 400; // สมมติว่าตัวละครจริงกินพื้นที่ 400px ในภาพ 540px
-        int offsetX = (960 - characterVisibleWidth) / 2; // หาระยะขอบว่างซ้าย-ขวาในภาพ 960px
-        int offsetY = (540 - characterVisibleHeight) / 2; // หาระยะขอบว่างบน-ล่างในภาพ 540px
-    
-        int characterLeft = movecharacter - offsetX; // ขอบซ้ายของตัวละคร
-        int characterRight = characterLeft + characterVisibleWidth - 200; // ขอบขวาของตัวละคร
-        int characterTop = jumpcharacter - offsetY; // ขอบบนของตัวละคร
-        int characterBottom = characterTop + characterVisibleHeight; // ขอบล่างของตัวละคร
+        Timer bounce;
+        int characterLeft = movecharacter; //ซ้าย
+        int characterRight = 0; //ขวา
+        int characterBottom = characterY + characterHeigth; //ล่าง
+
+        if ("c01".equals(ingame.textcha)) {
+           characterRight = movecharacter + c01Width;
+        } else if ("c02".equals(ingame.textcha)) {
+           characterRight = movecharacter + c02Width;
+        } else if ("c03".equals(ingame.textcha)) {
+            characterRight = movecharacter + c03Width;
+        } else if ("c04".equals(ingame.textcha)) {
+           characterRight = movecharacter + c04Width;
+        } else if ("c05".equals(ingame.textcha)) {
+           characterRight = movecharacter + c05Width;
+        }
+        bounce = new Timer(50, new ActionListener() { 
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                characterY = 540;
+                repaint(); // วาดใหม่ทุกครั้ง
+            }
+        });
+       
+        
     
         // กำหนดขอบเขตของมือ
         int handLeft = handX; // ขอบซ้ายของมือ
-        int handRight = handLeft + 165; // ขอบขวาของมือ (ตามขนาดจริง 165)
+        int handRight = handX + handWidth + 100; // ขอบขวาของมือ 
         int handTop = handY; // ขอบบนของมือ
-        int handBottom = handTop + 222; // ขอบล่างของมือ (ตามขนาดจริง 222)
-    
-        // ตรวจสอบการชน
-        if (characterRight > handLeft && characterLeft < handRight && characterBottom > handTop && characterTop < handBottom) {
-            // ชนแล้วกระเด้งไปตามทิศทาง
-            if (movecharacter > handLeft) {
-                movecharacter += 100;
-            } else {
-                movecharacter -= 100;
+
+        if (ishand) {
+            if (characterRight > handLeft && characterLeft < handRight && characterBottom > handTop) {
+                // กรณีชนจากซ้ายไปขวา
+                if (characterLeft < handRight) {
+                    movecharacter += 100; // เด้งไปทางขวา
+                    characterY -= 50;
+                    bounce.start();
+                }
+                // กรณีชนจากขวาไปซ้าย
+                else if (characterRight > handLeft) {
+                    movecharacter -= 100; // เด้งไปทางซ้าย
+                    characterY -= 50;
+                    bounce.start();
+                }
+                // กรณีชนจากด้านล่าง
+                if (characterBottom > handTop) {
+                    characterY = 450; // ปรับตำแหน่งแนวตั้ง
+                    bounce.start();
+                }
+                repaint(); // วาดใหม่
             }
-            jumpcharacter = 440; // เด้งตัวขึ้น
-            repaint();
         }
     }
     
