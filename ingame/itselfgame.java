@@ -1,5 +1,6 @@
-import java.awt.Graphics; // นำเข้าคลาส Graphics
+import java.awt.Graphics;
 import java.awt.Image;
+import java.awt.Robot;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -7,11 +8,10 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.util.Random;
-
-import javax.swing.Timer; 
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.Timer;
 
 public class itselfgame extends JFrame {
     String textcha;
@@ -22,108 +22,177 @@ public class itselfgame extends JFrame {
         setSize(1450, 840);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        pInGame = new PanelGame(this); // สร้าง PanelGame ที่นี่
+        pInGame = new PanelGame(this);
         pInGame.addMouseMotionListener(pInGame);
         pInGame.addMouseListener(pInGame);
         add(pInGame);
     }
 
+    public static void main(String[] args) {
+        new itselfgame("c02").setVisible(true);
+    }
 }
 
-class PanelGame extends JPanel implements MouseMotionListener,MouseListener {
+class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
     itselfgame ingame;
     Image[] character = new Image[5];
-    Image bg,hand;
+    Image bg, hand;
     int movecharacter = 0, characterY = 540;
-    int characterHeigth = 250;
+    int characterHeight = 250;
     int c01Width = 200, c02Width = 150, c03Width = 150, c04Width = 120, c05Width = 160;
-    boolean isJumping = false;
-    boolean ishand = true;
-    Timer jumpTimer;
-    Timer handTimer;
-    int jumpHeight = 10;
-    boolean jumpingUp = true; // ตัวแปรเช็คทิศทางกระโดด
-    int handX = 0, handY = 710; // ตำแหน่งของมือ
-    int handWidth = 80, handHeight = 100; 
+    boolean isJumping = false, ishand = true;
+    Timer actionTimer;
+    int handX = 0, handY = 710;
+    int handWidth = 80, handHeight = 100;
     Random random = new Random();
-   
+    private Robot robot;
 
     PanelGame(itselfgame ingame) {
         this.ingame = ingame;
         bg = Toolkit.getDefaultToolkit().getImage("C:/oopGame/ingame/bgingame.png");
         hand = Toolkit.getDefaultToolkit().getImage("C:/oopGame/ingame/handgrost.png");
-        for (int i = 0; i < 5; i++) {
-            character[i] = new ImageIcon("C:/oopGame/imageip/" + (i + 1) + ".png").getImage(); 
+
+        for (int i = 0; i < character.length; i++) {
+            character[i] = new ImageIcon("C:/oopGame/imageip/" + (i + 1) + ".png").getImage();
         }
 
-        handX = random.nextInt(1100) + 10; 
-        jumpTimer = new Timer(20, new ActionListener() {
-        
+        handX = random.nextInt(1100) + 10;
+
+        // Timer ที่ควบคุมทั้งกระโดดและตรวจสอบการชน
+        actionTimer = new Timer(20, new ActionListener() {
+            boolean jumpingUp = true; // ทิศทางการกระโดด
+
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (jumpingUp) {
-                    characterY -= 10; // กระโดดขึ้น
-                    if (characterY <= 400) { // ถึงจุดสูงสุดแล้ว
-                        jumpingUp = false; // เปลี่ยนทิศทางไปลง
-                    }
-                } else {
-                    characterY += 10; // ลง
-                    if (characterY >= 540) { // ถึงพื้นแล้ว
-                        characterY = 540; // รีเซ็ตตำแหน่ง
-                        isJumping = false; // รีเซ็ต flag ว่ากระโดดเสร็จแล้ว
-                        jumpTimer.stop(); // หยุด timer
+                if (isJumping) {
+                    if (jumpingUp) {
+                        characterY -= 10;
+                        if (characterY <= 400) {
+                            jumpingUp = false;
+                        }
+                    } else {
+                        characterY += 10;
+                        if (characterY >= 540) {
+                            characterY = 540;
+                            isJumping = false;
+                            jumpingUp = true;
+                        }
                     }
                 }
+            
                 repaint(); // วาดใหม่ทุกครั้ง
-            }
+            }    
         });
 
-        handTimer = new Timer(3000, new ActionListener() { 
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                ishand = !ishand; // สลับสถานะการแสดงมือ
-                if (ishand) {
-                    handX = random.nextInt(1100) + 10; // กำหนดตำแหน่งมือใหม่แบบสุ่ม
-                }
-                repaint(); // วาดใหม่ทุกครั้ง
-            }
-        });
-        handTimer.start(); // เริ่ม timer ของมือ
+        actionTimer.start(); // เริ่ม Timer
 
+
+        try {
+            robot = new Robot(); // สร้าง Robot หนึ่งตัวเพื่อควบคุมเมาส์
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         g.drawImage(bg, 0, 0, this);
-        if ("c01".equals(ingame.textcha)) {
-            g.drawImage(character[0], movecharacter-100, characterY, c01Width, characterHeigth, this);
-        } else if ("c02".equals(ingame.textcha)) {
-            g.drawImage(character[1], movecharacter-112, characterY, c02Width, characterHeigth, this);
-        } else if ("c03".equals(ingame.textcha)) {
-            g.drawImage(character[2], movecharacter-89, characterY, c03Width, characterHeigth, this);
-        } else if ("c04".equals(ingame.textcha)) {
-            g.drawImage(character[3], movecharacter-90, characterY, c04Width, characterHeigth, this);
-        } else if ("c05".equals(ingame.textcha)) {
-            g.drawImage(character[4], movecharacter-125, characterY, c05Width, characterHeigth, this);
+        Image currentCharacter = getCurrentCharacter();
+        g.drawImage(currentCharacter, movecharacter - getCharacterOffset(), characterY, getCharacterWidth(), characterHeight, this);
+
+        if (ishand) {
+            g.drawImage(hand, handX, handY, handWidth, handHeight, this);
         }
-        if(ishand){
-            g.drawImage(hand, handX , handY, handWidth, handHeight, this);
-        }
-        
     }
-    
-    @Override
-    public void mouseDragged(MouseEvent e) {}
+
+    private Image getCurrentCharacter() {
+        switch (ingame.textcha) {
+            case "c01": return character[0];
+            case "c02": return character[1];
+            case "c03": return character[2];
+            case "c04": return character[3];
+            case "c05": return character[4];
+            default: return null;
+        }
+    }
+
+    private int getCharacterWidth() {
+        switch (ingame.textcha) {
+            case "c01": return c01Width;
+            case "c02": return c02Width;
+            case "c03": return c03Width;
+            case "c04": return c04Width;
+            case "c05": return c05Width;
+            default: return 0;
+        }
+    }
+
+    private int getCharacterOffset() {
+        switch (ingame.textcha) {
+            case "c01": return 100;
+            case "c02": return 80;
+            case "c03": return 90;
+            case "c04": return 95;
+            case "c05": return 125;
+            default: return 0;
+        }
+    }
+
+    private boolean checkCollision() {
+        // ขอบของมือ
+        int handLeft = handX;
+        int handRight = handX + handWidth;
+        int handTop = handY;
+        int handBottom = handY + handHeight; 
+
+       // System.out.println("handLeft " + handLeft + "--------"+"handRight "+handRight);
+      //  System.out.println("handTop " + handTop );
+        // ขอบของตัวละคร
+        int characterLeft = movecharacter ;
+        int characterRight = movecharacter + getCharacterWidth();
+        int characterBottom = characterY + characterHeight ;
+     // System.out.println("characterLeft " + characterLeft + "--------"+"characterRight "+characterRight);
+     //  System.out.println("characterBottom " + characterBottom );
+      // System.out.println("characterY: " + characterY + ", handTop: " + handTop + ", handBottom: " + handBottom);
+
+        // ตรวจสอบการชนซ้ายขวา
+        if (characterRight - 115 > handLeft && characterLeft - 73 < handRight && characterBottom  > handTop) {
+            // ชนจากซ้ายไปขวา (ตัวละครเข้าไปด้านซ้ายของมือ)
+            if (characterRight - 115 > handLeft && characterLeft < handLeft) {
+                movecharacter -= 100; // เลื่อนตัวละครออกทางซ้าย
+                moveMouseWithCharacter(-100);
+            } 
+            // ชนจากขวาไปซ้าย (ตัวละครเข้าไปด้านขวาของมือ)
+            else if (characterLeft - 73 < handRight && characterRight > handRight) {
+               movecharacter += 100 ; // เลื่อนตัวละครออกทางขวา
+              moveMouseWithCharacter(100);
+            }
+                return true; // มีการชน
+            }
+            
+        return false; // ไม่มีการชน
+    }
+
+    // ฟังก์ชันเลื่อนเคอร์เซอร์ตามตัวละคร
+    private void moveMouseWithCharacter(int offsetX) {
+        try {
+            // รับตำแหน่งปัจจุบันของเคอร์เซอร์
+            int currentMouseX = java.awt.MouseInfo.getPointerInfo().getLocation().x;
+            int currentMouseY = java.awt.MouseInfo.getPointerInfo().getLocation().y;
+
+            // เลื่อนเคอร์เซอร์ไปตามตำแหน่งใหม่ (แกน X เคลื่อนตาม offset)
+            robot.mouseMove(currentMouseX + offsetX, currentMouseY);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     @Override
     public void mouseMoved(MouseEvent e) {
         movecharacter = e.getX();
-        checkCollision();
-        
-
-        // ตัวละคร c01 - เช็คขอบ
-        if ("c01".equals(ingame.textcha)) {
+         // ตัวละคร c01 - เช็คขอบ
+         if ("c01".equals(ingame.textcha)) {
             if (movecharacter - 100 < 0) { // ขอบซ้าย
                 movecharacter = 100;
             }
@@ -133,11 +202,11 @@ class PanelGame extends JPanel implements MouseMotionListener,MouseListener {
         }
         // ตัวละคร c02 - เช็คขอบ
         else if ("c02".equals(ingame.textcha)) {
-            if (movecharacter - 110 < 0) { // ขอบซ้าย
-                movecharacter = 110;
+            if (movecharacter - 80 < 0) { // ขอบซ้าย
+                movecharacter = 80;
             }
-            if (movecharacter + 40 > this.getWidth()) { // ขอบขวา
-                movecharacter = this.getWidth() - 40;
+            if (movecharacter + 65 > this.getWidth()) { // ขอบขวา
+                movecharacter = this.getWidth() - 65;
             }
         }
         // ตัวละคร c03 - เช็คขอบ
@@ -168,86 +237,30 @@ class PanelGame extends JPanel implements MouseMotionListener,MouseListener {
             }
         }
 
+        // ตรวจสอบการชนเมื่อเลื่อนเมาส์
+        if (ishand && checkCollision()) {
+            System.out.println("Collision detected!"); // Debugging purpose
+        }
+
+
         repaint();
     }
 
     @Override
     public void mouseClicked(MouseEvent e) {
-        if (!isJumping) { // ตรวจสอบว่ากำลังไม่กระโดดอยู่
-            isJumping = true; // ตั้งค่าให้กำลังกระโดด
-            jumpingUp = true;
-            characterY = 540; // เริ่มที่พื้น
-            jumpTimer.start(); // เริ่ม timer
+        if (!isJumping) {
+            isJumping = true;
         }
     }
 
+    @Override
+    public void mouseDragged(MouseEvent e) {}
     @Override
     public void mousePressed(MouseEvent e) {}
-
     @Override
     public void mouseReleased(MouseEvent e) {}
-
     @Override
     public void mouseEntered(MouseEvent e) {}
-
     @Override
     public void mouseExited(MouseEvent e) {}
-
-    void checkCollision() {
-        Timer bounce;
-        int characterLeft = movecharacter; //ซ้าย
-        int characterRight = 0; //ขวา
-        int characterBottom = characterY + characterHeigth; //ล่าง
-
-        if ("c01".equals(ingame.textcha)) {
-           characterRight = movecharacter + c01Width;
-        } else if ("c02".equals(ingame.textcha)) {
-           characterRight = movecharacter + c02Width;
-        } else if ("c03".equals(ingame.textcha)) {
-            characterRight = movecharacter + c03Width;
-        } else if ("c04".equals(ingame.textcha)) {
-           characterRight = movecharacter + c04Width;
-        } else if ("c05".equals(ingame.textcha)) {
-           characterRight = movecharacter + c05Width;
-        }
-        bounce = new Timer(50, new ActionListener() { 
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                characterY = 540;
-                repaint(); // วาดใหม่ทุกครั้ง
-            }
-        });
-       
-        
-    
-        // กำหนดขอบเขตของมือ
-        int handLeft = handX; // ขอบซ้ายของมือ
-        int handRight = handX + handWidth + 100; // ขอบขวาของมือ 
-        int handTop = handY; // ขอบบนของมือ
-
-        if (ishand) {
-            if (characterRight > handLeft && characterLeft < handRight && characterBottom > handTop) {
-                // กรณีชนจากซ้ายไปขวา
-                if (characterLeft < handRight) {
-                    movecharacter += 100; // เด้งไปทางขวา
-                    characterY -= 50;
-                    bounce.start();
-                }
-                // กรณีชนจากขวาไปซ้าย
-                else if (characterRight > handLeft) {
-                    movecharacter -= 100; // เด้งไปทางซ้าย
-                    characterY -= 50;
-                    bounce.start();
-                }
-                // กรณีชนจากด้านล่าง
-                if (characterBottom > handTop) {
-                    characterY = 450; // ปรับตำแหน่งแนวตั้ง
-                    bounce.start();
-                }
-                repaint(); // วาดใหม่
-            }
-        }
-    }
-    
- 
 }
