@@ -56,6 +56,12 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
     int handWidth = 80, handHeight = 100;
     Random random = new Random();
     private Robot robot;
+    int Candy=20;
+    Image[] CandyRain =new Image[Candy];
+    int[] Ranx =new int[Candy];
+    int[] Rany =new int[Candy];
+    double[] ranspeed=new  double[Candy];;
+    
     
 
     PanelGame(itselfgame ingame,tradetime timecount) {
@@ -68,6 +74,21 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
         for (int i = 0; i < character.length; i++) {
             character[i] = new ImageIcon("C:/oopGame/imageip/" + (i + 1) + ".png").getImage();
         }
+        // มีแค่ 11 รูป
+       for (int i = 0; i < CandyRain.length; i++) {
+        CandyRain[i] = new ImageIcon("C:/oopGame/imageRain/" + ((i % 10) + 1) + ".png").getImage();
+
+           Ranx[i] =random.nextInt(1200)+5;
+           Rany[i] = -random.nextInt(2)-5;
+           ranspeed[i] = random.nextDouble(10)+4;
+
+
+       }
+           // เริ่ม thread สำหรับการตกของลูกอม
+        CandyFall candyFallThread = new CandyFall(this);
+        candyFallThread.start();
+       
+
         timecount.startdown();
 
         handX = random.nextInt(1100) + 10;
@@ -81,7 +102,7 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
                 if (isJumping) {
                     if (jumpingUp) {
                         characterY -= 10;
-                        if (characterY <= 400) {
+                        if (characterY <= 350) {
                             jumpingUp = false;
                         }
                     } else {
@@ -105,7 +126,7 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
             public void actionPerformed(ActionEvent e) {
                 ishand = !ishand; // สลับสถานะการแสดงมือ
                 if (ishand) {
-                    handX = random.nextInt(1100) + 10; // กำหนดตำแหน่งมือใหม่แบบสุ่ม
+                    handX = random.nextInt(700) + 3; // กำหนดตำแหน่งมือใหม่แบบสุ่ม
                 }
                 repaint(); // วาดใหม่ทุกครั้ง
             }
@@ -117,15 +138,30 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        
     }
+
+
+
+
+    
 
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         g.drawImage(bg, 0, 0, this);
+        for(int i=0;i<Candy;i++)
+        {
+            g.drawImage(CandyRain[i],Ranx[i]-150,Rany[i],400,300,this);
+          
+
+        }
+
         Image currentCharacter = getCurrentCharacter();
         g.drawImage(currentCharacter, movecharacter - getCharacterOffset(), characterY, getCharacterWidth(), characterHeight, this);
         Font font = new Font("Berlin sans FB Demi", Font.BOLD, 20); 
+        
         if ("c01".equals(ingame.characterID)) {
             g.setFont(font); // ตั้งค่าฟ้อนให้กับ Graphics
              g.drawString(ingame.nameUser, movecharacter - getCharacterOffset() + 50, characterY - 20);
@@ -141,6 +177,42 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
        
         if (ishand) {
             g.drawImage(hand, handX, handY, handWidth, handHeight, this);
+        }
+
+        
+        repaint();
+      
+    }
+
+   
+    class CandyFall extends Thread {
+        private final PanelGame panelGame; // อ้างอิงถึง PanelGame เพื่อเข้าถึงข้อมูลของลูกอม
+    
+        CandyFall(PanelGame panelGame) {
+            this.panelGame = panelGame;
+        }
+    
+        @Override
+        public void run() {
+            while (true) {
+                // อัปเดตตำแหน่ง Y ของลูกอม
+                for (int i = 0; i < panelGame.Candy; i++) {
+                    panelGame.Rany[i] += panelGame.ranspeed[i]; // ลดตำแหน่ง Y ของลูกอม
+    
+                    // ตรวจสอบว่าลูกอมตกถึงด้านล่างของหน้าจอ
+                    if (panelGame.Rany[i] > panelGame.getHeight()) {
+                        panelGame.Rany[i] = -panelGame.random.nextInt(100); // รีเซ็ตตำแหน่ง Y ของลูกอม
+                        panelGame.Ranx[i] = panelGame.random.nextInt(1200) + 5; // รีเซ็ตตำแหน่ง X ของลูกอม
+                    }
+                }
+    
+                panelGame.repaint(); // อัปเดตหน้าจอ
+                try {
+                    Thread.sleep(20); // หยุดชั่วคราวเพื่อให้การเคลื่อนไหวไม่เร็วเกินไป
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
