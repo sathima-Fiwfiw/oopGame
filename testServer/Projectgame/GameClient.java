@@ -16,8 +16,14 @@ public class GameClient {
     private PrintWriter out;
     private Map<String, Point> otherPlayers = new HashMap<>(); // Store positions of other players by name
     private String playerName; // Name of this player
-
+    Image bg;
+    Image[] character = new Image[5];
+    
     public GameClient(Color color) {
+        bg = Toolkit.getDefaultToolkit().getImage("C:/testSever/bgingame.png"); 
+        for (int i = 0; i < character.length; i++) {
+            character[i] = new ImageIcon("C:/testSever/" + (i + 1) + ".png").getImage(); 
+        }
         this.color = color;
         getPlayerName();
         createAndShowGUI();
@@ -38,16 +44,21 @@ public class GameClient {
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 // Draw the current player
+                Image currentCharacter = getCurrentCharacter();
+                g.drawImage(bg, 0, 0, this);
                 g.setColor(color);
-                g.fillOval(x, y, 20, 20); // Draw player as a circle
+                g.drawImage(currentCharacter, x , y, 100, 100, this); // Draw player as a circle
                 g.setColor(Color.BLACK);
                 g.drawString(playerName, x, y - 5); // Draw player name above the circle
 
                 // Draw other players
                 for (Map.Entry<String, Point> entry : otherPlayers.entrySet()) {
+                    Image currentCharacterfrien = getCurrentCharacter();
+                    
+                    g.drawImage(bg, 0, 0, this);
                     g.setColor(Color.BLUE); // Color for other players
                     Point p = entry.getValue();
-                    g.fillOval(p.x, p.y, 20, 20); // Draw other player as a circle
+                    g.drawImage(currentCharacterfrien, p.x, p.y, 100, 100, this);
                     g.drawString(entry.getKey(), p.x, p.y - 5); // Draw other player's name
                 }
             }
@@ -102,6 +113,17 @@ public class GameClient {
             }
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    private Image getCurrentCharacter() {
+        switch ("c01") {
+            case "c01": return character[0];
+            case "c02": return character[1];
+            case "c03": return character[2];
+            case "c04": return character[3];
+            case "c05": return character[4];
+            default: return null;
         }
     }
 
