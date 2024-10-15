@@ -2,6 +2,7 @@
 public class tradetime {
     int minutes;
     int seconds;
+    boolean isend = true;
     tradetime(int minutes, int seconds){
         this.minutes = minutes;
         this.seconds = seconds;
@@ -21,6 +22,7 @@ public class tradetime {
                         seconds--;
                     }
                 }
+                isend = false;
                // ltime.setText("Time's up!");
             } catch (InterruptedException e) {
                 //ltime.setText("Countdown interrupted");
