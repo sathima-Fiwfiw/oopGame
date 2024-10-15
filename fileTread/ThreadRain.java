@@ -2,14 +2,15 @@ import javax.swing.JPanel;
 
 class ThreadRain extends Thread {
     private final PanelGame panelGame; // อ้างอิงถึง PanelGame เพื่อเข้าถึงข้อมูลของลูกอม
-
-    ThreadRain(PanelGame panelGame) {
+    tradetime tt ;
+    ThreadRain(PanelGame panelGame ,   tradetime tt) {
         this.panelGame = panelGame;
+        this.tt = tt;
     }
 
     @Override
     public void run() {
-        while (true) {
+        while (tt.isend) {
             // อัปเดตตำแหน่ง Y ของลูกอม
             for (int i = 0; i < panelGame.Candy; i++) {
                 panelGame.Rany[i] += panelGame.ranspeed[i]; // ลดตำแหน่ง Y ของลูกอม
