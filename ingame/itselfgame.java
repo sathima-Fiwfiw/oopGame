@@ -29,7 +29,7 @@ public class itselfgame extends JFrame {
         setSize(1450, 840);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        timecount = new tradetime(0,30);
+        timecount = new tradetime(0,3);
         pInGame = new PanelGame(this,timecount);
         pInGame.addMouseMotionListener(pInGame);
         pInGame.addMouseListener(pInGame);
@@ -45,7 +45,7 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
     itselfgame ingame;
     tradetime timecount;
     Image[] character = new Image[5];
-    Image bg, hand;
+    Image bg, hand, timeUP;
     int movecharacter = 0, characterY = 540;
     int characterHeight = 250;
     int c01Width = 200, c02Width = 150, c03Width = 150, c04Width = 120, c05Width = 160;
@@ -73,6 +73,7 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
 
         bg = Toolkit.getDefaultToolkit().getImage("C:/oopGame/ingame/bgingame.png");
         hand = Toolkit.getDefaultToolkit().getImage("C:/oopGame/ingame/handgrost.png");
+        timeUP = Toolkit.getDefaultToolkit().getImage("C:/oopGame/ingame/time.png");
 
         for (int i = 0; i < character.length; i++) {
             character[i] = new ImageIcon("C:/oopGame/imageip/" + (i + 1) + ".png").getImage();
@@ -148,18 +149,24 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
        handTimer = new Timer(3000, new ActionListener() { 
             @Override
             public void actionPerformed(ActionEvent e) {
-                ishand = !ishand; // สลับสถานะการแสดงมือ
-                if (ishand) {
-                    handX = random.nextInt(700) + 3; // กำหนดตำแหน่งมือใหม่แบบสุ่ม
+                if (timecount.isend) { // ตรวจสอบก่อนว่าหมดเวลาหรือยัง
+                    ishand = !ishand; // สลับสถานะการแสดงมือ
+                    if (ishand) {
+                        handX = random.nextInt(700) + 3; // กำหนดตำแหน่งมือใหม่แบบสุ่ม
+                    }
+                    // ตรวจสอบการชนเมื่อเลื่อนเมาส์
+                    if (ishand && checkCollision()) {
+                        System.out.println("Collision detected!"); // Debugging purpose
+                    }
+                    repaint(); // วาดใหม่ทุกครั้ง
+                } else {
+                    handTimer.stop(); // หยุด timer ถ้าเวลาหมด
                 }
-                // ตรวจสอบการชนเมื่อเลื่อนเมาส์
-                if (ishand && checkCollision()) {
-                    System.out.println("Collision detected!"); // Debugging purpose
-                }
-                repaint(); // วาดใหม่ทุกครั้ง
             }
         });
         handTimer.start(); // เริ่ม timer ของมือ
+        
+        
 
         try {
             robot = new Robot(); // สร้าง Robot หนึ่งตัวเพื่อควบคุมเมาส์
@@ -206,6 +213,9 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
         if (ishand) {
             g.drawImage(hand, handX, handY, handWidth, handHeight, this);
         }
+        if (!timecount.isend) {
+            g.drawImage(timeUP, 320, 100, 800, 500, this);
+        }
 
         
         repaint();
@@ -251,15 +261,11 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
         int handLeft = handX;
         int handRight = handX + handWidth;
         int handTop = handY;
-
-        //System.out.println("handLeft " + handLeft + "--------"+"handRight "+handRight);
-      //  System.out.println("handTop " + handTop );
         // ขอบของตัวละคร
         int characterLeft = movecharacter ;
         int characterRight = movecharacter + getCharacterWidth();
         int characterBottom = characterY + characterHeight ;
-       // System.out.println("characterLeft " + characterLeft + "--------"+"characterRight "+characterRight);
-
+        
                 // ตรวจสอบการชนซ้ายขวา
             if (characterRight - 115 > handLeft && characterLeft - 65 < handRight && characterBottom  > handTop) {
                 // ชนจากซ้ายไปขวา (ตัวละครเข้าไปด้านซ้ายของมือ)
@@ -312,15 +318,17 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
         int characterLeft = movecharacter;
         int characterRight = movecharacter + getCharacterWidth();
         int characterTop = characterY;
-
-        if (candyBottom >= characterTop && candyRight  >= characterLeft - 75 && candyLeft <= characterRight - 125) {
+        if (timecount.isend) {
+            if (candyBottom >= characterTop && candyRight  >= characterLeft - 75 && candyLeft <= characterRight - 125) {
             // ลูกอมชนกับตัวละคร
             //System.out.println("Collected candy at index: " + index);
             iscandy[index] = false;
             Score += 50; 
             
             // เพิ่มคะแนนหรือจัดการการเก็บลูกอมที่นี่
+            }
         }
+        
 
 
     }
@@ -341,7 +349,10 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
 
     @Override
     public void mouseMoved(MouseEvent e) {
-        movecharacter = e.getX();
+        if (timecount.isend) {
+            movecharacter = e.getX();
+        }
+        
          // ตัวละคร c01 - เช็คขอบ
          if ("c01".equals(ingame.characterID)) {
             if (movecharacter - 100 < 0) { // ขอบซ้าย
