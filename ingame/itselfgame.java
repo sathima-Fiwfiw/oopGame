@@ -28,8 +28,8 @@ public class itselfgame extends JFrame {
 
         setSize(1450, 840);
         setLocationRelativeTo(null);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        timecount = new tradetime(0,3);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); 
+        timecount = new tradetime(0,10);
         pInGame = new PanelGame(this,timecount);
         pInGame.addMouseMotionListener(pInGame);
         pInGame.addMouseListener(pInGame);
@@ -45,7 +45,7 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
     itselfgame ingame;
     tradetime timecount;
     Image[] character = new Image[5];
-    Image bg, hand, timeUP;
+    Image bg, hand, timeUP , donut, pumpkin , ready;
     int movecharacter = 0, characterY = 540;
     int characterHeight = 250;
     int c01Width = 200, c02Width = 150, c03Width = 150, c04Width = 120, c05Width = 160;
@@ -53,17 +53,27 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
     boolean isJumping = false, ishand = true;
     Timer actionTimer;
     Timer handTimer;
-    int handX = 0, handY = 710;
+    Timer showReadyTimer;
+    int handX , handY = 710;
     int handWidth = 80, handHeight = 100;
     Random random = new Random();
     private Robot robot;
-    int Candy=3;
+    int Candy=5;   
     Image[] CandyRain =new Image[Candy];
     int[] Ranx =new int[Candy];
     int[] Rany =new int[Candy];
     double[] ranspeed=new  double[Candy];
     boolean[] iscandy = new boolean[Candy];
     int Score = 0;
+    int donutWidth = 50, donutHeight = 50;
+    int donutX,donutY = 70;
+    double donutSpeed;
+    boolean isdonut = true;
+    int pumpkinWidth = 50, pumpkinHeight = 55;
+    int pumpkinX,pumpkinY = 70;
+    double pumpkinSpeed;
+    boolean ispumpkin= true;
+    boolean showReadyImage = true;
     
     
 
@@ -74,6 +84,9 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
         bg = Toolkit.getDefaultToolkit().getImage("C:/oopGame/ingame/bgingame.png");
         hand = Toolkit.getDefaultToolkit().getImage("C:/oopGame/ingame/handgrost.png");
         timeUP = Toolkit.getDefaultToolkit().getImage("C:/oopGame/ingame/time.png");
+        donut = Toolkit.getDefaultToolkit().getImage("C:/oopGame/imageRain/donut.png"); 
+        pumpkin = Toolkit.getDefaultToolkit().getImage("C:/oopGame/imageRain/pumpkin.png");
+        ready = Toolkit.getDefaultToolkit().getImage("C:/oopGame/ingame/ready.png");
 
         for (int i = 0; i < character.length; i++) {
             character[i] = new ImageIcon("C:/oopGame/imageip/" + (i + 1) + ".png").getImage();
@@ -83,20 +96,40 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
         CandyRain[i] = new ImageIcon("C:/oopGame/imageRain/" + ((i % 10) + 1) + ".png").getImage();
 
            Ranx[i] =random.nextInt(1350)+5;
-           Rany[i] = 60;
+           Rany[i] = 70;
            ranspeed[i] = random.nextDouble(10.0)+4.0;
 
            iscandy[i] = true;
        }
+       donutX =random.nextInt(1350)+5;
+       donutY = 70;
+       donutSpeed = random.nextDouble(6.0)+2.5;
+
+       pumpkinX =  random.nextInt(1350)+5;
+       pumpkinY = 70;
+       pumpkinSpeed = random.nextDouble(6.0)+2.5;
+
            // เริ่ม thread สำหรับการตกของลูกอม
         ThreadRain candyFallThread = new ThreadRain(this,timecount);
-        candyFallThread.start();
+        
+
+        handX = random.nextInt(1200) + 10;
+               // Timer เพื่อแสดงภาพ "ready" เป็นเวลา 3 วินาที
+        showReadyTimer = new Timer(3000, new ActionListener() {
+                @Override
+            public void actionPerformed(ActionEvent e) {
+               showReadyImage = false; // ซ่อนภาพ "ready" หลังจาก 3 วินาที
+               candyFallThread.start();
+               timecount.startdown();
+               actionTimer.start(); // เริ่ม Timer สำหรับเกม
+               handTimer.start(); // เริ่ม Timer ของมือ
+              
+               repaint(); // วาดใหม่ทุกครั้ง
+           }
+        });
+        showReadyTimer.setRepeats(false); // ทำให้ Timer นี้ทำงานเพียงครั้งเดียว
+        showReadyTimer.start(); // เริ่มการทำงานของ Timer
        
-
-        timecount.startdown();
-
-        handX = random.nextInt(1100) + 10;
-
         // Timer ที่ควบคุมทั้งกระโดดและตรวจสอบการชน
         actionTimer = new Timer(20, new ActionListener() {
             boolean jumpingUp = true; // ทิศทางการกระโดด
@@ -135,16 +168,16 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
                         }
                     }
 
-                    for(int i = 0; i < Candy; i++)
-                        {
+                    for(int i = 0; i < Candy; i++){
                             checkCollectCandy(i);
-                        }
+                    }
+                    checkCollectDonut();
+                    checkCollectPumpkin();
                 }
             
                 repaint(); // วาดใหม่ทุกครั้ง
             }    
         });
-        actionTimer.start(); // เริ่ม Timer
 
        handTimer = new Timer(3000, new ActionListener() { 
             @Override
@@ -155,7 +188,7 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
                         handX = random.nextInt(700) + 3; // กำหนดตำแหน่งมือใหม่แบบสุ่ม
                     }
                     // ตรวจสอบการชนเมื่อเลื่อนเมาส์
-                    if (ishand && checkCollision()) {
+                    if (ishand && checkCollision() && !showReadyImage) {
                         System.out.println("Collision detected!"); // Debugging purpose
                     }
                     repaint(); // วาดใหม่ทุกครั้ง
@@ -164,7 +197,6 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
                 }
             }
         });
-        handTimer.start(); // เริ่ม timer ของมือ
         
         
 
@@ -183,36 +215,47 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         g.drawImage(bg, 0, 0, this);
-        for(int i=0;i<Candy;i++)
-        {
-            if (iscandy[i]) {
-                 g.drawImage(CandyRain[i],Ranx[i],Rany[i],candyWidth,candyHeight,this);
+
+        if (showReadyImage) {
+             g.drawImage(ready,250,200,this);
+        }
+       else{
+            for(int i=0;i<Candy;i++)
+            {
+                if (iscandy[i]) {
+                    g.drawImage(CandyRain[i],Ranx[i],Rany[i],candyWidth,candyHeight,this);
+                }
             }
+            if (isdonut) {
+                g.drawImage(donut,donutX,donutY,donutWidth,donutHeight,this);
+            }
+            if (ispumpkin) {
+                g.drawImage(pumpkin,pumpkinX,pumpkinY,pumpkinWidth,pumpkinHeight,this);
+            }
+            Image currentCharacter = getCurrentCharacter();
+            g.drawImage(currentCharacter, movecharacter - getCharacterOffset(), characterY, getCharacterWidth(), characterHeight, this);
+            Font font = new Font("Berlin sans FB Demi", Font.BOLD, 20); 
+            
+            if ("c01".equals(ingame.characterID)) {
+                g.setFont(font); // ตั้งค่าฟ้อนให้กับ Graphics
+                g.drawString(ingame.nameUser, movecharacter - getCharacterOffset() + 50, characterY - 20);
+            }
+            else{
+                g.setFont(font); // ตั้งค่าฟ้อนให้กับ Graphics
+                g.drawString(ingame.nameUser, movecharacter - getCharacterOffset() + 20, characterY - 20);
+            }
+            Font fonttime = new Font("Berlin sans FB Demi", Font.BOLD, 40); 
+            g.setFont(fonttime);
+            g.drawString(String.format("%02d:%02d", timecount.minutes, timecount.seconds), 300, 55);
 
-        }
-
-        Image currentCharacter = getCurrentCharacter();
-        g.drawImage(currentCharacter, movecharacter - getCharacterOffset(), characterY, getCharacterWidth(), characterHeight, this);
-        Font font = new Font("Berlin sans FB Demi", Font.BOLD, 20); 
+            String ScoreStr = Integer.toString(Score);
+            g.drawString("  "+ScoreStr, 1110, 55);
         
-        if ("c01".equals(ingame.characterID)) {
-            g.setFont(font); // ตั้งค่าฟ้อนให้กับ Graphics
-             g.drawString(ingame.nameUser, movecharacter - getCharacterOffset() + 50, characterY - 20);
+            if (ishand) {
+                g.drawImage(hand, handX-10, handY, handWidth, handHeight, this);
+            }
         }
-        else{
-            g.setFont(font); // ตั้งค่าฟ้อนให้กับ Graphics
-            g.drawString(ingame.nameUser, movecharacter - getCharacterOffset() + 20, characterY - 20);
-        }
-        Font fonttime = new Font("Berlin sans FB Demi", Font.BOLD, 40); 
-        g.setFont(fonttime);
-        g.drawString(String.format("%02d:%02d", timecount.minutes, timecount.seconds), 300, 55);
-
-        String ScoreStr = Integer.toString(Score);
-        g.drawString("  "+ScoreStr, 1110, 55);
-       
-        if (ishand) {
-            g.drawImage(hand, handX, handY, handWidth, handHeight, this);
-        }
+        
         if (!timecount.isend) {
             g.drawImage(timeUP, 320, 100, 800, 500, this);
         }
@@ -255,7 +298,7 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
             default: return 0;
         }
     }
-
+    //เช็คโดนมือผี
     private boolean checkCollision() {
         // ขอบของมือ
         int handLeft = handX;
@@ -272,11 +315,13 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
                 if (characterRight - 115 > handLeft && characterLeft < handLeft) {
                     movecharacter -= 100; // เลื่อนตัวละครออกทางซ้าย
                     moveMouseWithCharacter(-100);
+                    Score -= 70;
                 } 
                 // ชนจากขวาไปซ้าย (ตัวละครเข้าไปด้านขวาของมือ)
                 else if (characterLeft - 65 < handRight && characterRight > handRight) {
-                movecharacter += 100 ; // เลื่อนตัวละครออกทางขวา
-                moveMouseWithCharacter(100);
+                    movecharacter += 100 ; // เลื่อนตัวละครออกทางขวา
+                    moveMouseWithCharacter(100);
+                    Score -= 70;
                 }
                
                 return true; // มีการชน
@@ -286,6 +331,7 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
                     characterY = handY - characterHeight;
                     movecharacter += 100; // Bounce right
                     characterY = 540;
+                    Score -= 70;
                     return true;
             }
         
@@ -304,12 +350,13 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
         // ตรวจสอบว่าตัวละครอยู่เหนือมือ และตกลงไปสัมผัสมือ
         if (characterBottom >= handTop && characterBottom <= handTop + 10 && // ตัวละครอยู่ในระยะใกล้มือ
             characterRight  - 125 > handLeft && characterLeft - 75 < handRight) { // ตัวละครอยู่ภายในขอบซ้ายขวาของมือ
+            Score -= 70;
             return true;
         }
     
         return false;
     }
-
+    //เช็คลูกอมโดนตัวละคร
     void checkCollectCandy(int index){
         int candyBottom = Rany[index] + candyHeight;
         int candyLeft = Ranx[index];
@@ -318,19 +365,49 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
         int characterLeft = movecharacter;
         int characterRight = movecharacter + getCharacterWidth();
         int characterTop = characterY;
-        if (timecount.isend) {
-            if (candyBottom >= characterTop && candyRight  >= characterLeft - 75 && candyLeft <= characterRight - 125) {
+    
+        // ตรวจสอบว่าลูกอมชนกับตัวละครและยังอยู่ในสถานะที่สามารถเก็บได้อยู่
+        if (iscandy[index] && candyBottom >= characterTop && candyRight >= characterLeft - 75 && candyLeft <= characterRight - 125) {
             // ลูกอมชนกับตัวละคร
-            //System.out.println("Collected candy at index: " + index);
-            iscandy[index] = false;
+            iscandy[index] = false; // เปลี่ยนสถานะลูกอมเพื่อไม่ให้ถูกเก็บซ้ำ
             Score += 50; 
-            
+            //System.out.println("Collected candy at index: " + index);
             // เพิ่มคะแนนหรือจัดการการเก็บลูกอมที่นี่
-            }
+        }
+    }
+    //เช็คโดนัทโดนตัวละคร
+    void checkCollectDonut(){
+        int DonutBottom =  donutY + donutHeight;
+        int DonutLeft = donutX;
+        int DonutRight = donutX + donutWidth;
+        
+        int characterLeft = movecharacter;
+        int characterRight = movecharacter + getCharacterWidth();
+        int characterTop = characterY;
+        if (isdonut && DonutBottom >= characterTop && DonutRight >= characterLeft - 75 && DonutLeft <= characterRight - 125) {
+           
+            isdonut = false; 
+            Score += 200; 
+           
+        }
+
+    }
+    //เช็คฝักทองโดนตัวละคร
+    void checkCollectPumpkin(){
+        int pumpkinBottom =  pumpkinY + pumpkinHeight;
+        int pumpkintLeft = pumpkinX;
+        int pumpkinRight = pumpkinX + pumpkinWidth;
+        
+        int characterLeft = movecharacter;
+        int characterRight = movecharacter + getCharacterWidth();
+        int characterTop = characterY;
+
+        if (ispumpkin && pumpkinBottom  >= characterTop && pumpkinRight >= characterLeft - 75 && pumpkintLeft<= characterRight - 125) {
+          
+            ispumpkin = false; 
+            Score -= 150; 
         }
         
-
-
     }
 
     // ฟังก์ชันเลื่อนเคอร์เซอร์ตามตัวละคร
@@ -400,7 +477,7 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
         }
 
         // ตรวจสอบการชนเมื่อเลื่อนเมาส์
-        if (ishand && checkCollision()) {
+        if (ishand && checkCollision() && !showReadyImage) {
             System.out.println("Collision detected!"); // Debugging purpose
         }
         //เช็คตัวละครโดนลูกอม
@@ -409,14 +486,20 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
             checkCollectCandy(i);
         }
 
+        checkCollectDonut();
+        checkCollectPumpkin();
+
         repaint();
     }
 
     @Override
     public void mouseClicked(MouseEvent e) {
-        if (!isJumping) {
-            isJumping = true;
+        if (timecount.isend) {
+            if (!isJumping) {
+                isJumping = true;
+            }
         }
+        
     }
 
     @Override
