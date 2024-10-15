@@ -15,9 +15,11 @@ class ThreadRain extends Thread {
                 panelGame.Rany[i] += panelGame.ranspeed[i]; // ลดตำแหน่ง Y ของลูกอม
 
                 // ตรวจสอบว่าลูกอมตกถึงด้านล่างของหน้าจอ
-                if (panelGame.Rany[i] > panelGame.getHeight()) {
-                    panelGame.Rany[i] = -panelGame.random.nextInt(100); // รีเซ็ตตำแหน่ง Y ของลูกอม
-                    panelGame.Ranx[i] = panelGame.random.nextInt(1200) + 5; // รีเซ็ตตำแหน่ง X ของลูกอม
+                if (panelGame.Rany[i] > panelGame.getHeight() || !panelGame.iscandy[i]) {
+                    panelGame.iscandy[i] = true; 
+                    panelGame.Rany[i] = 60; // รีเซ็ตตำแหน่ง Y ของลูกอม
+                    panelGame.Ranx[i] = panelGame.random.nextInt(1350) + 5; // รีเซ็ตตำแหน่ง X ของลูกอม
+                    panelGame.ranspeed[i] = panelGame.random.nextDouble(10.0)+4.0; //สุ่มความเร็วใหม่ด้วย
                 }
             }
 
