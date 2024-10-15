@@ -14,18 +14,20 @@ public class GameClient {
     private Color color;
     private Socket socket;
     private PrintWriter out;
-    private Map<String, Point> otherPlayers = new HashMap<>(); // Store positions of other players by name
+    private Map<String, PlayerPoint> otherPlayers = new HashMap<>(); // Store positions of other players by name
     private String playerName; // Name of this player
+    private String characterCode; // Character code
     Image bg;
     Image[] character = new Image[5];
-    
+
     public GameClient(Color color) {
-        bg = Toolkit.getDefaultToolkit().getImage("C:/testSever/bgingame.png"); 
+        bg = Toolkit.getDefaultToolkit().getImage("C:/testSever/bgingame.png");
         for (int i = 0; i < character.length; i++) {
-            character[i] = new ImageIcon("C:/testSever/" + (i + 1) + ".png").getImage(); 
+            character[i] = new ImageIcon("C:/testSever/" + (i + 1) + ".png").getImage();
         }
         this.color = color;
         getPlayerName();
+        getCharacterCode(); // รับรหัสตัวละคร
         createAndShowGUI();
         connectToServer();
     }
@@ -37,6 +39,23 @@ public class GameClient {
         }
     }
 
+    private void getCharacterCode() {
+        String[] characterOptions = {"c01", "c02", "c03", "c04", "c05"};
+        characterCode = (String) JOptionPane.showInputDialog(
+                frame,
+                "Choose your character code:",
+                "Character Code Selection",
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                characterOptions,
+                characterOptions[0] // Default selection
+        );
+
+        if (characterCode == null) {
+            characterCode = "c01"; // Default character code
+        }
+    }
+
     private void createAndShowGUI() {
         frame = new JFrame("Game Client");
         panel = new JPanel() {
@@ -44,22 +63,19 @@ public class GameClient {
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 // Draw the current player
-                Image currentCharacter = getCurrentCharacter();
                 g.drawImage(bg, 0, 0, this);
-                g.setColor(color);
-                g.drawImage(currentCharacter, x , y, 100, 100, this); // Draw player as a circle
+                g.drawImage(character[getCharacterIndex(characterCode)], x, y, 100, 100, this); // Draw player
                 g.setColor(Color.BLACK);
-                g.drawString(playerName, x, y - 5); // Draw player name above the circle
+                g.drawString(playerName, x, y - 5); // Draw player name above the character
 
                 // Draw other players
-                for (Map.Entry<String, Point> entry : otherPlayers.entrySet()) {
-                    Image currentCharacterfrien = getCurrentCharacter();
-                    
-                    g.drawImage(bg, 0, 0, this);
-                    g.setColor(Color.BLUE); // Color for other players
-                    Point p = entry.getValue();
-                    g.drawImage(currentCharacterfrien, p.x, p.y, 100, 100, this);
-                    g.drawString(entry.getKey(), p.x, p.y - 5); // Draw other player's name
+                for (Map.Entry<String, PlayerPoint> entry : otherPlayers.entrySet()) {
+                    PlayerPoint p = entry.getValue();
+                    String otherName = entry.getKey();
+
+                    Image otherCharacterImage = getCharacterImageBasedOnCode(p.characterCode); // Use characterCode from PlayerPoint
+                    g.drawImage(otherCharacterImage, p.x, p.y, 100, 100, this);
+                    g.drawString(otherName, p.x, p.y - 5); // Draw other player's name
                 }
             }
         };
@@ -74,8 +90,8 @@ public class GameClient {
         panel.addMouseMotionListener(new MouseMotionAdapter() {
             @Override
             public void mouseMoved(MouseEvent e) {
-                x = e.getX() - 10; // Center the circle on the mouse
-                y = e.getY() - 10;
+                x = e.getX() - 50; // Center the character on the mouse
+                y = e.getY() - 50;
                 sendPosition();
                 panel.repaint();
             }
@@ -88,6 +104,7 @@ public class GameClient {
             socket = new Socket(serverAddress, SERVER_PORT);
             out = new PrintWriter(socket.getOutputStream(), true);
             out.println(playerName); // Send player name to the server
+            out.println(characterCode); // Send character code to the server
             new Thread(this::receivePositionUpdates).start();
         } catch (IOException e) {
             e.printStackTrace();
@@ -95,7 +112,7 @@ public class GameClient {
     }
 
     private void sendPosition() {
-        out.println(x + "," + y);
+        out.println(playerName + "," + x + "," + y + "," + characterCode); // Include player name and character code
     }
 
     private void receivePositionUpdates() {
@@ -103,31 +120,57 @@ public class GameClient {
             String message;
             while ((message = in.readLine()) != null) {
                 String[] parts = message.split(",");
-                String otherName = parts[0]; // Extract the name of the other player
-                int otherX = Integer.parseInt(parts[1]);
-                int otherY = Integer.parseInt(parts[2]);
+                if (parts.length == 4) { // Check length
+                    String otherName = parts[0]; // Extract the name of the other player
+                    int otherX = Integer.parseInt(parts[1]);
+                    int otherY = Integer.parseInt(parts[2]);
+                    String otherCharacterCode = parts[3]; // Extract character code
 
-                // Update position of other player
-                otherPlayers.put(otherName, new Point(otherX, otherY));
-                panel.repaint(); // Redraw the panel
+                    // Update position and character code of other player
+                    otherPlayers.put(otherName, new PlayerPoint(otherX, otherY, otherCharacterCode)); // Use PlayerPoint
+                    panel.repaint(); // Redraw the panel
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private Image getCurrentCharacter() {
-        switch ("c01") {
+    private Image getCharacterImageBasedOnCode(String code) {
+        switch (code) {
             case "c01": return character[0];
             case "c02": return character[1];
             case "c03": return character[2];
             case "c04": return character[3];
             case "c05": return character[4];
-            default: return null;
+            default: return null; // Use default image
+        }
+    }
+
+    private int getCharacterIndex(String code) {
+        switch (code) {
+            case "c01": return 0;
+            case "c02": return 1;
+            case "c03": return 2;
+            case "c04": return 3;
+            case "c05": return 4;
+            default: return 2; // Default to the 3rd character
         }
     }
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new GameClient(Color.RED)); // Change color as needed
+    }
+
+    // Class PlayerPoint
+    private class PlayerPoint {
+        int x, y;
+        String characterCode;
+
+        public PlayerPoint(int x, int y, String characterCode) {
+            this.x = x;
+            this.y = y;
+            this.characterCode = characterCode;
+        }
     }
 }
