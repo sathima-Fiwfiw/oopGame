@@ -49,6 +49,7 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
     int movecharacter = 0, characterY = 540;
     int characterHeight = 250;
     int c01Width = 200, c02Width = 150, c03Width = 150, c04Width = 120, c05Width = 160;
+    int candyWidth = 60, candyHeight = 35;
     boolean isJumping = false, ishand = true;
     Timer actionTimer;
     Timer handTimer;
@@ -56,11 +57,12 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
     int handWidth = 80, handHeight = 100;
     Random random = new Random();
     private Robot robot;
-    int Candy=10;
+    int Candy=35;
     Image[] CandyRain =new Image[Candy];
     int[] Ranx =new int[Candy];
     int[] Rany =new int[Candy];
-    double[] ranspeed=new  double[Candy];;
+    double[] ranspeed=new  double[Candy];
+    boolean[] iscandy = new boolean[Candy];
     
     
 
@@ -82,7 +84,7 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
            Rany[i] = 60;
            ranspeed[i] = random.nextDouble(10.0)+4.0;
 
-
+           iscandy[i] = true;
        }
            // เริ่ม thread สำหรับการตกของลูกอม
         ThreadRain candyFallThread = new ThreadRain(this);
@@ -102,7 +104,7 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
                 if (isJumping) {
                     if (jumpingUp) {
                         characterY -= 10;
-                        if (characterY <= 350) {
+                        if (characterY <= 385) {
                             jumpingUp = false; // เปลี่ยนทิศทางเมื่อตัวละครกระโดดถึงจุดสูงสุด
                         }
                     } else {
@@ -130,6 +132,11 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
                             jumpingUp = true;
                         }
                     }
+
+                    for(int i = 0; i < Candy; i++)
+                        {
+                            checkCollectCandy(i);
+                        }
                 }
             
                 repaint(); // วาดใหม่ทุกครั้ง
@@ -170,8 +177,9 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
         g.drawImage(bg, 0, 0, this);
         for(int i=0;i<Candy;i++)
         {
-            g.drawImage(CandyRain[i],Ranx[i],Rany[i],60,35,this);
-          
+            if (iscandy[i]) {
+                 g.drawImage(CandyRain[i],Ranx[i],Rany[i],candyWidth,candyHeight,this);
+            }
 
         }
 
@@ -293,6 +301,25 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
         return false;
     }
 
+    void checkCollectCandy(int index){
+        int candyBottom = Rany[index] + candyHeight;
+        int candyLeft = Ranx[index];
+        int candyRight = Ranx[index] + candyWidth;
+        
+        int characterLeft = movecharacter;
+        int characterRight = movecharacter + getCharacterWidth();
+        int characterTop = characterY;
+
+        if (candyBottom >= characterTop && candyRight  >= characterLeft - 75 && candyLeft <= characterRight - 125) {
+            // ลูกอมชนกับตัวละคร
+            //System.out.println("Collected candy at index: " + index);
+            iscandy[index] = false;
+            // เพิ่มคะแนนหรือจัดการการเก็บลูกอมที่นี่
+        }
+
+
+    }
+
     // ฟังก์ชันเลื่อนเคอร์เซอร์ตามตัวละคร
     private void moveMouseWithCharacter(int offsetX) {
         try {
@@ -360,7 +387,11 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
         if (ishand && checkCollision()) {
             System.out.println("Collision detected!"); // Debugging purpose
         }
-
+        //เช็คตัวละครโดนลูกอม
+        for(int i = 0; i < Candy; i++)
+        {
+            checkCollectCandy(i);
+        }
 
         repaint();
     }
