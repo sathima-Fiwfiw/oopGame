@@ -29,7 +29,7 @@ public class itselfgame extends JFrame {
         setSize(1450, 840);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        timecount = new tradetime(2,0);
+        timecount = new tradetime(0,30);
         pInGame = new PanelGame(this,timecount);
         pInGame.addMouseMotionListener(pInGame);
         pInGame.addMouseListener(pInGame);
@@ -57,12 +57,13 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
     int handWidth = 80, handHeight = 100;
     Random random = new Random();
     private Robot robot;
-    int Candy=35;
+    int Candy=3;
     Image[] CandyRain =new Image[Candy];
     int[] Ranx =new int[Candy];
     int[] Rany =new int[Candy];
     double[] ranspeed=new  double[Candy];
     boolean[] iscandy = new boolean[Candy];
+    int Score = 0;
     
     
 
@@ -80,14 +81,14 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
        for (int i = 0; i < CandyRain.length; i++) {
         CandyRain[i] = new ImageIcon("C:/oopGame/imageRain/" + ((i % 10) + 1) + ".png").getImage();
 
-           Ranx[i] =random.nextInt(1200)+5;
+           Ranx[i] =random.nextInt(1350)+5;
            Rany[i] = 60;
            ranspeed[i] = random.nextDouble(10.0)+4.0;
 
            iscandy[i] = true;
        }
            // เริ่ม thread สำหรับการตกของลูกอม
-        ThreadRain candyFallThread = new ThreadRain(this);
+        ThreadRain candyFallThread = new ThreadRain(this,timecount);
         candyFallThread.start();
        
 
@@ -198,7 +199,9 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
         Font fonttime = new Font("Berlin sans FB Demi", Font.BOLD, 40); 
         g.setFont(fonttime);
         g.drawString(String.format("%02d:%02d", timecount.minutes, timecount.seconds), 300, 55);
-        g.drawString(" 001500", 1110, 55);
+
+        String ScoreStr = Integer.toString(Score);
+        g.drawString("  "+ScoreStr, 1110, 55);
        
         if (ishand) {
             g.drawImage(hand, handX, handY, handWidth, handHeight, this);
@@ -314,6 +317,8 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
             // ลูกอมชนกับตัวละคร
             //System.out.println("Collected candy at index: " + index);
             iscandy[index] = false;
+            Score += 50; 
+            
             // เพิ่มคะแนนหรือจัดการการเก็บลูกอมที่นี่
         }
 
