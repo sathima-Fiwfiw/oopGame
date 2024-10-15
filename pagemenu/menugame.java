@@ -3,10 +3,17 @@ import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import java.io.File;
+import javax.sound.sampled.*;
 
 class menugame extends JFrame {
     panelMenu panel = new panelMenu(this);
@@ -24,18 +31,19 @@ class panelMenu extends JPanel {
     Image bg, candyblue, candyorenge, donut;
     JButton start, about, exit;
     menugame menu;
+    Clip backgroundMusic;
 
     panelMenu(menugame menu) {
         this.menu = menu;
 
-        bg = Toolkit.getDefaultToolkit().getImage("E:/gamefinal/imgmenu/bgMenu1.png");
-        candyblue = Toolkit.getDefaultToolkit().getImage("E:/gamefinal/imgmenu/candyBlue.png");
-        candyorenge = Toolkit.getDefaultToolkit().getImage("E:/gamefinal/imgmenu/candyorenge.png");
-        donut = Toolkit.getDefaultToolkit().getImage("E:/gamefinal/imgmenu/donut.png");
+        bg = Toolkit.getDefaultToolkit().getImage("C://oopProjactGram//imgMenu/bgMenu1.png");
+        candyblue = Toolkit.getDefaultToolkit().getImage("C://oopProjactGram//imgMenu/candyBlue.png");
+        candyorenge = Toolkit.getDefaultToolkit().getImage("C://oopProjactGram//imgMenu/candyorenge.png");
+        donut = Toolkit.getDefaultToolkit().getImage("C://oopProjactGram//imgMenu/donut.png");
 
-        ImageIcon startIcon = new ImageIcon("E:/gamefinal/imgmenu/strat.png");
-        ImageIcon aboutIcon = new ImageIcon("E:/gamefinal/imgmenu/about.png");
-        ImageIcon exitIcon = new ImageIcon("E:/gamefinal/imgmenu/exit.png");
+        ImageIcon startIcon = new ImageIcon("C://oopProjactGram//imgMenu/strat.png");
+        ImageIcon aboutIcon = new ImageIcon("C://oopProjactGram//imgMenu/about.png");
+        ImageIcon exitIcon = new ImageIcon("C://oopProjactGram//imgMenu/exit.png");
 
         Image startImg = startIcon.getImage().getScaledInstance(300, 80, Image.SCALE_SMOOTH);
         Image aboutImg = aboutIcon.getImage().getScaledInstance(300, 80, Image.SCALE_SMOOTH);
@@ -84,6 +92,28 @@ class panelMenu extends JPanel {
         add(start);
         add(about);
         add(exit);
+
+        playBackgroundMusic("Halloween.wav");
+    }
+
+    public void playBackgroundMusic(String filepath) {
+        try {
+            File file = new File(filepath);
+            AudioInputStream audioStream = AudioSystem.getAudioInputStream(file);
+            backgroundMusic = AudioSystem.getClip();
+            backgroundMusic.open(audioStream);
+            backgroundMusic.loop(Clip.LOOP_CONTINUOUSLY);
+            backgroundMusic.start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void stopBackgroundMusic() {
+        if (backgroundMusic != null && backgroundMusic.isRunning()) {
+            backgroundMusic.stop();
+            backgroundMusic.close();
+        }
     }
 
     @Override
