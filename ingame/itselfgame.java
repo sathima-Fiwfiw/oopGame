@@ -29,7 +29,7 @@ public class itselfgame extends JFrame {
         setSize(1450, 840);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); 
-        timecount = new tradetime(0,10);
+        timecount = new tradetime(0,3);
         pInGame = new PanelGame(this,timecount);
         pInGame.addMouseMotionListener(pInGame);
         pInGame.addMouseListener(pInGame);
@@ -37,7 +37,7 @@ public class itselfgame extends JFrame {
     }
 
     public static void main(String[] args) {
-        new itselfgame("c01","PODER_555","192.0011255").setVisible(true);
+        new itselfgame("c02","PODER_555","192.0011255").setVisible(true);
     }
 }
 
@@ -45,7 +45,7 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
     itselfgame ingame;
     tradetime timecount;
     Image[] character = new Image[5];
-    Image bg, hand, timeUP , donut, pumpkin , ready;
+    Image bg, hand, timeUP , donut, pumpkin , ready,showwinner;
     int movecharacter = 0, characterY = 540;
     int characterHeight = 250;
     int c01Width = 200, c02Width = 150, c03Width = 150, c04Width = 120, c05Width = 160;
@@ -54,6 +54,7 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
     Timer actionTimer;
     Timer handTimer;
     Timer showReadyTimer;
+    Timer showTimerUP;
     int handX , handY = 710;
     int handWidth = 80, handHeight = 100;
     Random random = new Random();
@@ -74,8 +75,8 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
     double pumpkinSpeed;
     boolean ispumpkin= true;
     boolean showReadyImage = true;
-    
-    
+    boolean showTimerUPimage = true;
+    Image currentCharacter;
 
     PanelGame(itselfgame ingame,tradetime timecount) {
         this.ingame = ingame;
@@ -87,6 +88,7 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
         donut = Toolkit.getDefaultToolkit().getImage("C:/oopGame/imageRain/donut.png"); 
         pumpkin = Toolkit.getDefaultToolkit().getImage("C:/oopGame/imageRain/pumpkin.png");
         ready = Toolkit.getDefaultToolkit().getImage("C:/oopGame/ingame/ready.png");
+        showwinner = Toolkit.getDefaultToolkit().getImage("C:/oopGame/ingame/ShowScore.png");
 
         for (int i = 0; i < character.length; i++) {
             character[i] = new ImageIcon("C:/oopGame/imageip/" + (i + 1) + ".png").getImage();
@@ -112,7 +114,7 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
            // เริ่ม thread สำหรับการตกของลูกอม
         ThreadRain candyFallThread = new ThreadRain(this,timecount);
         
-
+        currentCharacter = getCurrentCharacter();
         handX = random.nextInt(1200) + 10;
                // Timer เพื่อแสดงภาพ "ready" เป็นเวลา 3 วินาที
         showReadyTimer = new Timer(3000, new ActionListener() {
@@ -198,7 +200,15 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
             }
         });
         
-        
+        showTimerUP = new Timer(3000, new ActionListener() {
+            @Override
+        public void actionPerformed(ActionEvent e) {
+            showTimerUPimage = false;
+           repaint(); // วาดใหม่ทุกครั้ง
+       }
+    });
+    showTimerUP.setRepeats(false); // ทำให้ Timer นี้ทำงานเพียงครั้งเดียว
+   // showTimerUP.start(); // เริ่มการทำงานของ Timer
 
         try {
             robot = new Robot(); // สร้าง Robot หนึ่งตัวเพื่อควบคุมเมาส์
@@ -232,7 +242,6 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
             if (ispumpkin) {
                 g.drawImage(pumpkin,pumpkinX,pumpkinY,pumpkinWidth,pumpkinHeight,this);
             }
-            Image currentCharacter = getCurrentCharacter();
             g.drawImage(currentCharacter, movecharacter - getCharacterOffset(), characterY, getCharacterWidth(), characterHeight, this);
             Font font = new Font("Berlin sans FB Demi", Font.BOLD, 20); 
             
@@ -257,7 +266,29 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
         }
         
         if (!timecount.isend) {
-            g.drawImage(timeUP, 320, 100, 800, 500, this);
+            if (showTimerUPimage) {
+                g.drawImage(timeUP, 320, 100, 800, 500, this);
+                showTimerUP.start();
+            }
+            else{
+                g.drawImage(showwinner, 0, 50,1440,750, this);
+                Font  fontWinner = new Font("Berlin sans FB Demi", Font.BOLD, 40); 
+                g.setFont(fontWinner);
+                g.drawString(ingame.nameUser, 720, 345);
+                String ScoreStr = Integer.toString(Score);
+                g.drawString(ScoreStr, 790, 470);
+                if ("c01".equals(ingame.characterID)) {
+                    g.drawImage(currentCharacter, 500, 250, getCharacterWidth()-70, characterHeight-70, this);
+                }
+                else if ("c05".equals(ingame.characterID)) {
+                    g.drawImage(currentCharacter, 500, 250, getCharacterWidth()-40, characterHeight-70, this);
+                }
+                else{
+                    g.drawImage(currentCharacter, 520, 250, getCharacterWidth()-40, characterHeight-70, this);
+                }
+                
+
+            }
         }
 
         
