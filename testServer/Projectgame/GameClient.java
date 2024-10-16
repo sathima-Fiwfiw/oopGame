@@ -1,4 +1,5 @@
 import javax.swing.*;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
@@ -15,15 +16,20 @@ public class GameClient {
     private Socket socket;
     private PrintWriter out;
     private Map<String, PlayerPoint> otherPlayers = new HashMap<>(); // Store positions of other players by name
+    private Point candyPosition = new Point(); // Store single candy position
+    private Point ghostHandPosition = new Point(); // Store single ghost hand position
+    private boolean ghostHandVisible = false; // Control visibility of ghost hand
     private String playerName; // Name of this player
     private String characterCode; // Character code
-    Image bg;
+    Image bg, hand;
     Image[] character = new Image[5];
+    private int ghostHandServerX;
 
     public GameClient(Color color) {
-        bg = Toolkit.getDefaultToolkit().getImage("C:/testSever/bgingame.png");
+        bg = Toolkit.getDefaultToolkit().createImage(System.getProperty("user.dir") + File.separator + "bgingame.png");
+        hand = Toolkit.getDefaultToolkit().createImage(System.getProperty("user.dir") + File.separator + "handgrost.png");
         for (int i = 0; i < character.length; i++) {
-            character[i] = new ImageIcon("C:/testSever/" + (i + 1) + ".png").getImage();
+            character[i] = Toolkit.getDefaultToolkit().createImage(System.getProperty("user.dir") +  File.separator + (i + 1) + ".png"); 
         }
         this.color = color;
         getPlayerName();
@@ -64,7 +70,7 @@ public class GameClient {
                 super.paintComponent(g);
                 // Draw the current player
                 g.drawImage(bg, 0, 0, this);
-                g.drawImage(character[getCharacterIndex(characterCode)], x, y, 100, 100, this); // Draw player
+                g.drawImage(character[getCharacterIndex(characterCode)], x, y, 180, 250, this); // Draw player
                 g.setColor(Color.BLACK);
                 g.drawString(playerName, x, y - 5); // Draw player name above the character
 
@@ -74,28 +80,64 @@ public class GameClient {
                     String otherName = entry.getKey();
 
                     Image otherCharacterImage = getCharacterImageBasedOnCode(p.characterCode); // Use characterCode from PlayerPoint
-                    g.drawImage(otherCharacterImage, p.x, p.y, 100, 100, this);
+                    g.drawImage(otherCharacterImage, p.x, p.y, 180, 250, this);
                     g.drawString(otherName, p.x, p.y - 5); // Draw other player's name
+
+                    // Draw candy and ghost hand for other players
+                    g.setColor(Color.YELLOW); // Candy color
+                    g.fillOval(p.candyPosition.x, p.candyPosition.y, 20, 20); // Draw other player's candy
+
+                    // Draw ghost hand if visible for other player
+                    if (p.ghostHandPosition != null) {
+                        g.drawImage(hand, p.ghostHandPosition.x, p.ghostHandPosition.y, 80, 100, this); // Draw ghost hand
+                    }
+                }
+
+                // Draw single candy for the current player
+                g.setColor(Color.YELLOW); // Candy color
+                g.fillOval(candyPosition.x, candyPosition.y, 20, 20); // Draw current player's candy
+
+                // Draw ghost hand if visible for current player
+                if (ghostHandVisible) {
+                    g.drawImage(hand, ghostHandPosition.x, ghostHandPosition.y, 80, 100, this); // Draw ghost hand
                 }
             }
-        };
 
-        panel.setPreferredSize(new Dimension(400, 400));
-        frame.add(panel);
-        frame.pack();
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setVisible(true);
 
-        // Mouse motion listener to track mouse movement
-        panel.addMouseMotionListener(new MouseMotionAdapter() {
-            @Override
-            public void mouseMoved(MouseEvent e) {
-                x = e.getX() - 50; // Center the character on the mouse
-                y = e.getY() - 50;
-                sendPosition();
+              
+            };
+            
+
+            panel.setPreferredSize(new Dimension(1440, 810));
+            frame.add(panel);
+            frame.pack();
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.setVisible(true);
+
+            // Mouse motion listener to track mouse movement
+            panel.addMouseMotionListener(new MouseMotionAdapter() {
+                @Override
+                public void mouseMoved(MouseEvent e) {
+                    x = e.getX() - 80; // Center the character on the mouse
+                    y = 540;
+                    sendPosition();
+                    panel.repaint();
+                }
+            });
+
+            // Start the ghost hand timer to show the hand periodically
+            new javax.swing.Timer(5000, e -> {
+                ghostHandVisible = true;
+                ghostHandPosition.x = ghostHandServerX;
+                ghostHandPosition.y = 710;
                 panel.repaint();
-            }
-        });
+            
+                // Hide the ghost hand after 2 seconds
+                new javax.swing.Timer(2000, e2 -> {
+                    ghostHandVisible = false;
+                    panel.repaint();
+                }).setRepeats(false);
+            }).start();
     }
 
     private void connectToServer() {
@@ -120,57 +162,80 @@ public class GameClient {
             String message;
             while ((message = in.readLine()) != null) {
                 String[] parts = message.split(",");
-                if (parts.length == 4) { // Check length
-                    String otherName = parts[0]; // Extract the name of the other player
+                if (parts.length == 4) {
+                    String otherPlayerName = parts[0];
                     int otherX = Integer.parseInt(parts[1]);
                     int otherY = Integer.parseInt(parts[2]);
-                    String otherCharacterCode = parts[3]; // Extract character code
-
-                    // Update position and character code of other player
-                    otherPlayers.put(otherName, new PlayerPoint(otherX, otherY, otherCharacterCode)); // Use PlayerPoint
-                    panel.repaint(); // Redraw the panel
+                    String otherCharacterCode = parts[3];
+    
+                    // Update positions of other players
+                    PlayerPoint playerPoint = new PlayerPoint(otherX, otherY, otherCharacterCode);
+                    playerPoint.candyPosition.setLocation(candyPosition); // ตั้งค่าตำแหน่งจุดเหลือง
+                    playerPoint.ghostHandPosition.setLocation(ghostHandPosition); // ตั้งค่าตำแหน่งมือผี
+                    otherPlayers.put(otherPlayerName, playerPoint);
+                    panel.repaint();
+                } else if (parts[0].equals("candy")) {
+                    // Update single candy position
+                    int candyX = Integer.parseInt(parts[1]);
+                    int candyY = Integer.parseInt(parts[2]);
+                    candyPosition.setLocation(candyX, candyY);
+    
+                    // Reset candy when it reaches the bottom
+                    if (candyPosition.y >= panel.getHeight()) {
+                        candyPosition.y = 70; // Reset to top
+                        candyPosition.x =  (600); // Random x-position
+                    }
+                } else if (parts[0].equals("ghostHand")) {
+                    // Update ghost hand position
+                    int ghostHandX = Integer.parseInt(parts[1]);
+                    int ghostHandY = Integer.parseInt(parts[2]);
+                    ghostHandPosition.setLocation(ghostHandX, ghostHandY); // Update ghost hand position
+                    ghostHandVisible = true; // Make ghost hand visible
                 }
+                panel.repaint();
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+    
 
+    // Helper method to get the character image based on code
     private Image getCharacterImageBasedOnCode(String code) {
-        switch (code) {
-            case "c01": return character[0];
-            case "c02": return character[1];
-            case "c03": return character[2];
-            case "c04": return character[3];
-            case "c05": return character[4];
-            default: return null; // Use default image
-        }
+        int index = getCharacterIndex(code);
+        return character[index];
     }
 
     private int getCharacterIndex(String code) {
         switch (code) {
-            case "c01": return 0;
-            case "c02": return 1;
-            case "c03": return 2;
-            case "c04": return 3;
-            case "c05": return 4;
-            default: return 2; // Default to the 3rd character
+            case "c02":
+                return 1;
+            case "c03":
+                return 2;
+            case "c04":
+                return 3;
+            case "c05":
+                return 4;
+            default:
+                return 0;
         }
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new GameClient(Color.RED)); // Change color as needed
-    }
-
-    // Class PlayerPoint
-    private class PlayerPoint {
+    // A simple class to store player positions and character codes
+    private static class PlayerPoint {
         int x, y;
         String characterCode;
-
-        public PlayerPoint(int x, int y, String characterCode) {
+        Point candyPosition = new Point(); // ตำแหน่งจุดเหลือง
+        Point ghostHandPosition = new Point(); // ตำแหน่งมือผี
+    
+        PlayerPoint(int x, int y, String characterCode) {
             this.x = x;
             this.y = y;
             this.characterCode = characterCode;
         }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new GameClient(Color.RED)); // Change player color as needed
     }
 }
