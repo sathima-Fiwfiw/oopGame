@@ -8,9 +8,10 @@ public class GameServer {
     private static final int SERVER_PORT = 12345;
     private static final Set<PrintWriter> clientWriters = new HashSet<>();
     
-    private List<Point> candyPositions = new ArrayList<>();
-    private List<Point> ghostHandPositions = new ArrayList<>();
-    private List<Double> candySpeeds = new ArrayList<>(); // Add candy speed array
+    private final int MAX_CANDIES = 10; // จำนวนสูงสุดของลูกอม
+    private Point[] candyPositions = new Point[MAX_CANDIES];
+    private Point[] ghostHandPositions = new Point[MAX_CANDIES];
+    private double[] candySpeeds = new double[MAX_CANDIES]; // ใช้เป็นอาเรย์สำหรับความเร็วลูกอม
     private Random random = new Random();
     private final int GAME_WIDTH = 1440;
     private final int GAME_HEIGHT = 810;
@@ -49,11 +50,11 @@ public class GameServer {
                     clientWriters.add(out);
                 }
 
-                // Receive player name and character code
+                // รับชื่อผู้เล่นและโค้ดตัวละคร
                 playerName = in.readLine();
                 characterCode = in.readLine();
 
-                // Start a separate thread for candy and ghost hands
+                // เริ่ม thread แยกสำหรับลูกอมและมือผี
                 new Thread(GameServer.this::spawnAndMoveCandy).start();
 
                 String message;
@@ -88,24 +89,24 @@ public class GameServer {
     }
 
     private void spawnAndMoveCandy() {
+        for (int i = 0; i < MAX_CANDIES; i++) {
+            // กำหนดค่าเริ่มต้นให้กับตำแหน่งและความเร็วของลูกอม
+            int candyRandomX = random.nextInt(GAME_WIDTH - 100);
+            candyPositions[i] = new Point(candyRandomX, 70);
+            candySpeeds[i] = 5.0; // ความเร็วเริ่มต้นของลูกอม
+
+            // กำหนดตำแหน่งของมือผีแบบสุ่ม
+            int randomX = random.nextInt(GAME_WIDTH - 100);
+            ghostHandPositions[i] = new Point(randomX, 710);
+        }
+
+        broadcastCandyAndGhostHands(); // ส่งตำแหน่งเริ่มต้นให้ผู้เล่นทุกคน
+
         while (true) {
-            // Add new candies
-            Point candyPos = new Point(100, 70);
-            candyPositions.add(candyPos);
-
-            // Randomly position ghost hand on the X-axis
-            int randomX = random.nextInt(GAME_WIDTH - 100); // Random X position within game width
-            Point ghostHandPos = new Point(randomX, 710);
-            ghostHandPositions.add(ghostHandPos);
-
-            // Add random speed for the new candy
-            candySpeeds.add(1.0);
-
-            broadcastCandyAndGhostHands();
-            moveCandy(); // Move the candies downward
+            moveCandy(); // ขยับลูกอมลงมา
 
             try {
-                Thread.sleep(5000); // Adjust as needed for smooth movement
+                Thread.sleep(50); // ควบคุมความเร็วในการอัพเดทตำแหน่งลูกอม
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -113,28 +114,25 @@ public class GameServer {
     }
 
     private void moveCandy() {
-        for (int i = 0; i < candyPositions.size(); i++) {
-            Point candy = candyPositions.get(i);
-            candy.y += candySpeeds.get(i); // Move candy down by its speed
+        for (int i = 0; i < MAX_CANDIES; i++) {
+            candyPositions[i].y += candySpeeds[i]; // ขยับลูกอมลงตามความเร็วของมัน
 
-            // If candy falls below the screen, reset its position
-            if (candy.y > GAME_HEIGHT) {
-                candy.y = 70; // Reset Y position
-                candy.x = 100; // Reset X position
-                candySpeeds.set(i, 1.0); // Reset speed
+            // ถ้าลูกอมตกลงไปนอกจอด้านล่าง ให้รีเซ็ตตำแหน่ง
+            if (candyPositions[i].y > GAME_HEIGHT) {
+                candyPositions[i].y = 70; // รีเซ็ตตำแหน่ง Y
+                candyPositions[i].x = random.nextInt(GAME_WIDTH - 100); // รีเซ็ตตำแหน่ง X แบบสุ่ม
+                candySpeeds[i] = 5.0; // รีเซ็ตความเร็ว
             }
         }
-        broadcastCandyAndGhostHands();
+        broadcastCandyAndGhostHands(); // ส่งตำแหน่งที่อัพเดทแล้วให้ผู้เล่นทุกคน
     }
 
     private void broadcastCandyAndGhostHands() {
         synchronized (clientWriters) {
             for (PrintWriter writer : clientWriters) {
-                for (Point candyPos : candyPositions) {
-                    writer.println("candy," + candyPos.x + "," + candyPos.y);
-                }
-                for (Point ghostHandPos : ghostHandPositions) {
-                    writer.println("ghostHand," + ghostHandPos.x + "," + ghostHandPos.y);
+                for (int i = 0; i < MAX_CANDIES; i++) {
+                    writer.println("candy," + candyPositions[i].x + "," + candyPositions[i].y);
+                    writer.println("ghostHand," + ghostHandPositions[i].x + "," + ghostHandPositions[i].y);
                 }
             }
         }
