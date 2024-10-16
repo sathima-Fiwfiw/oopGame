@@ -27,10 +27,10 @@ public class GameClient {
     Image[] character = new Image[5];
 
     public GameClient(Color color) {
-        bg = Toolkit.getDefaultToolkit().getImage("C:/testSever/bgingame.png");
-        hand = Toolkit.getDefaultToolkit().getImage("C:/testSever/handgrost.png");
+        bg = Toolkit.getDefaultToolkit().createImage(System.getProperty("user.dir") + File.separator + "bgingame.png");
+        hand = Toolkit.getDefaultToolkit().createImage(System.getProperty("user.dir") + File.separator + "handgrost.png");
         for (int i = 0; i < character.length; i++) {
-            character[i] = new ImageIcon("C:/testSever/" + (i + 1) + ".png").getImage();
+            character[i] = Toolkit.getDefaultToolkit().createImage(System.getProperty("user.dir") +  File.separator + (i + 1) + ".png"); 
         }
         this.color = color;
         getPlayerName();
@@ -128,8 +128,8 @@ public class GameClient {
             // Start the ghost hand timer to show the hand periodically
             new Timer(5000, e -> {
                 ghostHandVisible = true;
-                ghostHandPosition.x = (int) (Math.random() * panel.getWidth());
-                ghostHandPosition.y = (int) (Math.random() * (panel.getHeight() - 100));
+                ghostHandPosition.x = (400) ;
+                ghostHandPosition.y = (710) ;
                 panel.repaint();
 
                 // Hide the ghost hand after 2 seconds
@@ -183,7 +183,7 @@ public class GameClient {
                     // Reset candy when it reaches the bottom
                     if (candyPosition.y >= panel.getHeight()) {
                         candyPosition.y = 70; // Reset to top
-                        candyPosition.x = (int) (Math.random() * panel.getWidth()); // Random x-position
+                        candyPosition.x =  (600); // Random x-position
                     }
     
                     panel.repaint();
