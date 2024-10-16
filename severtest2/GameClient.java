@@ -1,4 +1,6 @@
 import javax.swing.*;
+import javax.swing.Timer;
+
 import java.awt.*;
 import java.util.List;
 import java.awt.event.*;
@@ -16,11 +18,12 @@ public class GameClient {
     private Socket socket;
     private PrintWriter out;
     private Map<String, PlayerPoint> otherPlayers = new HashMap<>(); // Store positions of other players by name
-    private List<Point> candyPositions = new ArrayList<>();
-    private List<Point> ghostHandPositions = new ArrayList<>();
+    private Point candyPosition = new Point(); // Store single candy position
+    private Point ghostHandPosition = new Point(); // Store single ghost hand position
+    private boolean ghostHandVisible = false; // Control visibility of ghost hand
     private String playerName; // Name of this player
     private String characterCode; // Character code
-    Image bg,hand;
+    Image bg, hand;
     Image[] character = new Image[5];
 
     public GameClient(Color color) {
@@ -82,16 +85,13 @@ public class GameClient {
                     g.drawString(otherName, p.x, p.y - 5); // Draw other player's name
                 }
 
-                // Draw candies
+                // Draw single candy
                 g.setColor(Color.YELLOW); // Candy color
-                for (Point candyPos : candyPositions) {
-                    g.fillOval(candyPos.x, candyPos.y, 20, 20); // Adjust candy size as needed
-                }
+                g.fillOval(candyPosition.x, candyPosition.y, 20, 20); // Adjust candy size as needed
 
-                // Draw ghost hands
-                g.setColor(Color.GRAY); // Ghost hand color
-                for (Point ghostHandPos : ghostHandPositions) {
-                    g.drawImage(hand,ghostHandPos.x, ghostHandPos.y, 80, 100,this); // Adjust ghost hand size as needed
+                // Draw ghost hand if visible
+                if (ghostHandVisible) {
+                    g.drawImage(hand, ghostHandPosition.x, ghostHandPosition.y, 80, 100, this); // Adjust ghost hand size as needed
                 }
             }
         };
@@ -112,6 +112,20 @@ public class GameClient {
                 panel.repaint();
             }
         });
+
+        // Start the ghost hand timer to show the hand periodically
+        new Timer(5000, e -> {
+            ghostHandVisible = true;
+            ghostHandPosition.x = (int) (Math.random() * panel.getWidth());
+            ghostHandPosition.y = (int) (Math.random() * (panel.getHeight() - 100));
+            panel.repaint();
+
+            // Hide the ghost hand after 2 seconds
+            new Timer(2000, e2 -> {
+                ghostHandVisible = false;
+                panel.repaint();
+            }).setRepeats(false);
+        }).start();
     }
 
     private void connectToServer() {
@@ -146,16 +160,17 @@ public class GameClient {
                     otherPlayers.put(otherPlayerName, new PlayerPoint(otherX, otherY, otherCharacterCode));
                     panel.repaint();
                 } else if (parts[0].equals("candy")) {
-                    // Update candy positions
+                    // Update single candy position
                     int candyX = Integer.parseInt(parts[1]);
                     int candyY = Integer.parseInt(parts[2]);
-                    candyPositions.add(new Point(candyX, candyY));
-                    panel.repaint();
-                } else if (parts[0].equals("ghostHand")) {
-                    // Update ghost hand positions
-                    int ghostHandX = Integer.parseInt(parts[1]);
-                    int ghostHandY = Integer.parseInt(parts[2]);
-                    ghostHandPositions.add(new Point(ghostHandX, ghostHandY));
+                    candyPosition.setLocation(candyX, candyY);
+
+                    // Reset candy when it reaches the bottom
+                    if (candyPosition.y >= panel.getHeight()) {
+                        candyPosition.y = 70; // Reset to top
+                        candyPosition.x = (int) (Math.random() * panel.getWidth()); // Random x-position
+                    }
+
                     panel.repaint();
                 }
             }
