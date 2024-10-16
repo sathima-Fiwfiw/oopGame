@@ -105,7 +105,7 @@ public class GameServer {
             moveCandy(); // Move the candies downward
 
             try {
-                Thread.sleep(20); // Adjust as needed for smooth movement
+                Thread.sleep(5000); // Adjust as needed for smooth movement
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
