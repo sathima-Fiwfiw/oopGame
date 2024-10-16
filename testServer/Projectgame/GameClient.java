@@ -98,9 +98,9 @@ public class GameClient {
                 g.fillOval(candyPosition.x, candyPosition.y, 20, 20); // Draw current player's candy
 
                 // Draw ghost hand if visible for current player
-                if (ghostHandVisible) {
+               /*if (ghostHandVisible) {
                     g.drawImage(hand, ghostHandPosition.x, ghostHandPosition.y, 80, 100, this); // Draw ghost hand
-                }
+                }*/
             }
 
 
@@ -125,19 +125,7 @@ public class GameClient {
                 }
             });
 
-            // Start the ghost hand timer to show the hand periodically
-            new javax.swing.Timer(5000, e -> {
-                ghostHandVisible = true;
-                ghostHandPosition.x = ghostHandServerX;
-                ghostHandPosition.y = 710;
-                panel.repaint();
-            
-                // Hide the ghost hand after 2 seconds
-                new javax.swing.Timer(2000, e2 -> {
-                    ghostHandVisible = false;
-                    panel.repaint();
-                }).setRepeats(false);
-            }).start();
+            // Start the ghost hand timer to show the hand periodical
     }
 
     private void connectToServer() {
@@ -192,6 +180,10 @@ public class GameClient {
                     ghostHandPosition.setLocation(ghostHandX, ghostHandY); // Update ghost hand position
                     ghostHandVisible = true; // Make ghost hand visible
                 }
+                 else if (parts[0].equals("hideGhostHand")) {
+                    ghostHandVisible = false; // ทำให้มือผีไม่ปรากฏ
+                }
+
                 panel.repaint();
             }
         } catch (IOException e) {
