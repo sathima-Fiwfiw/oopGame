@@ -1,8 +1,7 @@
 import java.io.*;
 import java.net.*;
-import java.util.*;
 import java.awt.*;
-import java.util.List;
+import java.util.*;
 
 public class GameServer {
     private static final int SERVER_PORT = 12345;
@@ -15,6 +14,8 @@ public class GameServer {
     private Random random = new Random();
     private final int GAME_WIDTH = 1440;
     private final int GAME_HEIGHT = 810;
+
+    private tradetime timer; // ตัวแปรสำหรับนับถอยหลัง
 
     public static void main(String[] args) {
         System.out.println("Game Server is running...");
@@ -57,6 +58,22 @@ public class GameServer {
                 // เริ่ม thread แยกสำหรับลูกอมและมือผี
                 new Thread(GameServer.this::spawnAndMoveCandy).start();
 
+                // เริ่มนับถอยหลังเวลา
+                timer = new tradetime(0, 30); // ตั้งค่าเริ่มต้น 1 นาที 0 วินาที
+                timer.startdown(); // เริ่มนับถอยหลัง
+
+                // ส่งข้อมูลเวลาให้ผู้เล่น
+                new Thread(() -> {
+                    while (timer.isend) {
+                        try {
+                            Thread.sleep(1000); // ส่งข้อมูลทุกวินาที
+                            broadcastTime(timer.minutes, timer.seconds);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }).start();
+
                 String message;
                 while ((message = in.readLine()) != null) {
                     String[] parts = message.split(",");
@@ -83,6 +100,14 @@ public class GameServer {
             synchronized (clientWriters) {
                 for (PrintWriter writer : clientWriters) {
                     writer.println(playerName + "," + x + "," + y + "," + characterCode);
+                }
+            }
+        }
+
+        private void broadcastTime(int minutes, int seconds) {
+            synchronized (clientWriters) {
+                for (PrintWriter writer : clientWriters) {
+                    writer.println("time," + minutes + "," + seconds);
                 }
             }
         }
@@ -136,5 +161,37 @@ public class GameServer {
                 }
             }
         }
+    }
+}
+
+class tradetime {
+    int minutes;
+    int seconds;
+    
+    boolean isshowtime = false;
+    boolean isend = true;
+
+    tradetime(int minutes, int seconds){
+        this.minutes = minutes;
+        this.seconds = seconds;
+    }
+
+    public void startdown() {
+        new Thread(() -> {
+            try {
+                while (minutes > 0 || seconds > 0) {
+                    Thread.sleep(1000);
+                    if (seconds == 0) {
+                        minutes--;
+                        seconds = 59;
+                    } else {
+                        seconds--;
+                    }
+                }
+                isend = false; // เมื่อหมดเวลา
+            } catch (InterruptedException e) {
+                // Handle interruption if necessary
+            }
+        }).start();
     }
 }
