@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.ArrayList;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 
 public class GameClient {
     private static final int SERVER_PORT = 12345;
@@ -113,6 +115,13 @@ public class GameClient {
                 if (ghostHandVisible) {
                     g.drawImage(hand, ghostHandPosition.x, ghostHandPosition.y, 80, 100, this); // Draw ghost hand
                 }
+
+                 // Draw the current time
+                 LocalTime now = LocalTime.now();
+                 String timeString = now.format(DateTimeFormatter.ofPattern("mm:ss")); // Format the time
+                 g.setColor(Color.WHITE);
+                 g.setFont(new Font("Arial", Font.BOLD, 24));
+                 g.drawString(timeString, 300, 55); // Draw time in the top-left corner
             }
         };
 
