@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.ArrayList;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 
 public class GameClient {
     private static final int SERVER_PORT = 12345;
@@ -27,21 +25,26 @@ public class GameClient {
     private String characterCode; // Character code
     Image bg, hand;
     Image[] character = new Image[5];
-    int Candy = 10;   
+    int Candy = 10;
     Image[] CandyRain = new Image[Candy];
     private List<Point> candyPositions = new ArrayList<>();
 
+    private int remainingMinutes = 0; // Minutes remaining
+    private int remainingSeconds = 0; // Seconds remaining
+
     public GameClient(Color color) {
         bg = Toolkit.getDefaultToolkit().createImage(System.getProperty("user.dir") + File.separator + "bgingame.png");
-        hand = Toolkit.getDefaultToolkit().createImage(System.getProperty("user.dir") + File.separator + "handgrost.png");
+        hand = Toolkit.getDefaultToolkit()
+                .createImage(System.getProperty("user.dir") + File.separator + "handgrost.png");
         for (int i = 0; i < character.length; i++) {
-            character[i] = Toolkit.getDefaultToolkit().createImage(System.getProperty("user.dir") +  File.separator + (i + 1) + ".png"); 
+            character[i] = Toolkit.getDefaultToolkit().createImage(System.getProperty("user.dir") + File.separator
+                    + "GhostCharacter" + File.separator + (i + 1) + ".png");
         }
         for (int i = 0; i < Candy; i++) {
             CandyRain[i] = Toolkit.getDefaultToolkit().createImage(
-                    System.getProperty("user.dir") + File.separator + "imageRain" + File.separator + (i + 1) + ".png");
+                    System.getProperty("user.dir") + File.separator + "candy" + File.separator + (i + 1) + ".png");
         }
-    
+
         this.color = color;
         getPlayerName();
         getCharacterCode(); // รับรหัสตัวละคร
@@ -57,7 +60,7 @@ public class GameClient {
     }
 
     private void getCharacterCode() {
-        String[] characterOptions = {"c01", "c02", "c03", "c04", "c05"};
+        String[] characterOptions = { "c01", "c02", "c03", "c04", "c05" };
         characterCode = (String) JOptionPane.showInputDialog(
                 frame,
                 "Choose your character code:",
@@ -90,38 +93,33 @@ public class GameClient {
                     PlayerPoint p = entry.getValue();
                     String otherName = entry.getKey();
 
-                    Image otherCharacterImage = getCharacterImageBasedOnCode(p.characterCode); // Use characterCode from PlayerPoint
+                    Image otherCharacterImage = getCharacterImageBasedOnCode(p.characterCode);
                     g.drawImage(otherCharacterImage, p.x, p.y, 180, 250, this);
                     g.drawString(otherName, p.x, p.y - 5); // Draw other player's name
                 }
 
-                int maxCandiesToDraw = Math.min(10, candyPositions.size()); // จำกัดจำนวนลูกอมที่จะแสดงไม่เกิน 10
+                int maxCandiesToDraw = Math.min(10, candyPositions.size());
                 for (int i = 0; i < maxCandiesToDraw; i++) {
                     Point candyPos = candyPositions.get(i);
-                    if (candyPos.x >= 0 && candyPos.x <= panel.getWidth() && 
-                        candyPos.y >= 0 && candyPos.y <= panel.getHeight()) {
-                        
-                        // ใช้ i % CandyRain.length เพื่อให้แน่ใจว่า i ไม่เกินขนาดของ CandyRain
-                        int candyImageIndex = i % CandyRain.length; 
-                        System.out.println("Drawing candy at: " + candyPos.x + ", " + candyPos.y);
-                        
-                        g.drawImage(CandyRain[candyImageIndex], candyPos.x, candyPos.y, 60, 35, this); 
-                    } else {
-                        System.out.println("Candy position out of bounds: " + candyPos.x + ", " + candyPos.y);
+                    if (candyPos.x >= 0 && candyPos.x <= panel.getWidth() &&
+                            candyPos.y >= 0 && candyPos.y <= panel.getHeight()) {
+
+                        int candyImageIndex = i % CandyRain.length;
+                        g.drawImage(CandyRain[candyImageIndex], candyPos.x, candyPos.y, 60, 35, this);
                     }
                 }
 
                 // Draw ghost hand if visible for current player
                 if (ghostHandVisible) {
-                    g.drawImage(hand, ghostHandPosition.x, ghostHandPosition.y, 80, 100, this); // Draw ghost hand
+                    g.drawImage(hand, ghostHandPosition.x, ghostHandPosition.y, 80, 100, this);
                 }
 
-                 // Draw the current time
-                 LocalTime now = LocalTime.now();
-                 String timeString = now.format(DateTimeFormatter.ofPattern("mm:ss")); // Format the time
-                 g.setColor(Color.WHITE);
-                 g.setFont(new Font("Arial", Font.BOLD, 24));
-                 g.drawString(timeString, 300, 55); // Draw time in the top-left corner
+                // Draw the current time from server
+                String timeString = String.format("%02d:%02d", remainingMinutes, remainingSeconds); // Format time as
+                                                                                                    // mm:ss
+                g.setColor(Color.WHITE);
+                g.setFont(new Font("Arial", Font.BOLD, 24));
+                g.drawString(timeString, 300, 55); // Draw time in the top-left corner
             }
         };
 
@@ -141,18 +139,6 @@ public class GameClient {
                 panel.repaint();
             }
         });
-
-        // Start the ghost hand timer to show the hand periodically
-        Timer ghostHandTimer = new Timer(10000, new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                ghostHandVisible = true; // Make ghost hand visible
-                ghostHandPosition.setLocation((int) (Math.random() * panel.getWidth()), (int) (Math.random() * panel.getHeight())); // Random position
-                sendGhostHandPosition();
-                panel.repaint();
-            }
-        });
-        ghostHandTimer.start();
     }
 
     private void connectToServer() {
@@ -172,10 +158,6 @@ public class GameClient {
         out.println(playerName + "," + x + "," + y + "," + characterCode); // Include player name and character code
     }
 
-    private void sendGhostHandPosition() {
-        out.println("ghostHand," + ghostHandPosition.x + "," + ghostHandPosition.y);
-    }
-
     private void receivePositionUpdates() {
         try (BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
             String message;
@@ -186,36 +168,37 @@ public class GameClient {
                     int otherX = Integer.parseInt(parts[1]);
                     int otherY = Integer.parseInt(parts[2]);
                     String otherCharacterCode = parts[3];
-    
+
                     // Update positions of other players
                     PlayerPoint playerPoint = new PlayerPoint(otherX, otherY, otherCharacterCode);
                     otherPlayers.put(otherPlayerName, playerPoint);
-                    panel.repaint();
                 } else if (parts[0].equals("candy")) {
-                    candyPositions.clear(); // ล้างรายการลูกอมเก่าก่อน
+                    candyPositions.clear(); // Clear old candy positions
                     for (int i = 1; i < parts.length; i += 2) {
                         int candyX = Integer.parseInt(parts[i]);
                         int candyY = Integer.parseInt(parts[i + 1]);
-                        candyPositions.add(new Point(candyX, candyY)); // เพิ่มตำแหน่งลูกอมแต่ละลูก
-                        System.out.println("Received candy position: " + candyX + ", " + candyY);
+                        candyPositions.add(new Point(candyX, candyY)); // Add each candy position
                     }
                 } else if (parts[0].equals("ghostHand")) {
                     // Update ghost hand position
                     int ghostHandX = Integer.parseInt(parts[1]);
                     int ghostHandY = Integer.parseInt(parts[2]);
-                    ghostHandPosition.setLocation(ghostHandX, ghostHandY); // Update ghost hand position
+                    ghostHandPosition.setLocation(ghostHandX, ghostHandY);
                     ghostHandVisible = true; // Make ghost hand visible
                 } else if (parts[0].equals("hideGhostHand")) {
-                    ghostHandVisible = false; // ทำให้มือผีไม่ปรากฏ
+                    ghostHandVisible = false; // Hide ghost hand
+                } else if (parts[0].equals("time")) {
+                    remainingMinutes = Integer.parseInt(parts[1]);
+                    remainingSeconds = Integer.parseInt(parts[2]);
                 }
 
-                panel.repaint();
+                panel.repaint(); // Repaint the panel to reflect updates
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-    
+
     // Helper method to get the character image based on code
     private Image getCharacterImageBasedOnCode(String code) {
         int index = getCharacterIndex(code);
@@ -247,7 +230,7 @@ public class GameClient {
         int y;
         String characterCode;
 
-        PlayerPoint(int x, int y, String characterCode) {
+        public PlayerPoint(int x, int y, String characterCode) {
             this.x = x;
             this.y = y;
             this.characterCode = characterCode;
