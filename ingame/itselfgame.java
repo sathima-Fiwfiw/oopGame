@@ -22,6 +22,7 @@ public class itselfgame extends JFrame {
     PanelGame pInGame;
     tradetime timecount;
     ThreadRain candyFallThread ;
+    ThreadHand handgrost;
 
     itselfgame(String characterID,String nameUser,String IP) {
         this.characterID = characterID;
@@ -33,7 +34,8 @@ public class itselfgame extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); 
         timecount = new tradetime(0,50); 
         candyFallThread = new ThreadRain(timecount);
-        pInGame = new PanelGame(this,timecount,candyFallThread);
+        handgrost = new ThreadHand(timecount);
+        pInGame = new PanelGame(this,timecount,candyFallThread,handgrost);
         pInGame.addMouseMotionListener(pInGame);
         pInGame.addMouseListener(pInGame);
         add(pInGame);
@@ -48,18 +50,17 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
     itselfgame ingame;
     tradetime timecount;
     ThreadRain candyFallThread ;
+    ThreadHand handgrost;
     Image[] character = new Image[5];
     Image bg, hand, timeUP , donut, pumpkin , ready,showwinner;
     int movecharacter = 0, characterY = 540;
     int characterHeight = 250;
     int c01Width = 200, c02Width = 150, c03Width = 150, c04Width = 120, c05Width = 160;
     int candyWidth = 60, candyHeight = 35;
-    boolean isJumping = false, ishand = true;
+    boolean isJumping = false;
     Timer actionTimer;
-    Timer handTimer;
     Timer showReadyTimer;
     Timer showTimerUP;
-    int handX , handY = 710;
     int handWidth = 80, handHeight = 100;
     Random random = new Random();
     private Robot robot;
@@ -72,11 +73,11 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
     boolean showTimerUPimage = true;
     Image currentCharacter;
 
-    PanelGame(itselfgame ingame,tradetime timecount , ThreadRain candyFallThread) {
+    PanelGame(itselfgame ingame,tradetime timecount , ThreadRain candyFallThread,  ThreadHand handgrost) {
         this.ingame = ingame;
         this.timecount = timecount;
         this.candyFallThread = candyFallThread;
-
+        this.handgrost = handgrost;
         bg = Toolkit.getDefaultToolkit().createImage(System.getProperty("user.dir") +
         File.separator + "ingame" + File.separator + "bgingame.png");
 
@@ -114,7 +115,7 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
        // ThreadRain candyFallThread = new ThreadRain(this,timecount);
         
         currentCharacter = getCurrentCharacter();
-        handX = random.nextInt(1200) + 10;
+
                // Timer เพื่อแสดงภาพ "ready" เป็นเวลา 3 วินาที
         showReadyTimer = new Timer(3000, new ActionListener() {
                 @Override
@@ -123,7 +124,7 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
                candyFallThread.start();
                timecount.startdown();
                actionTimer.start(); // เริ่ม Timer สำหรับเกม
-               handTimer.start(); // เริ่ม Timer ของมือ
+               handgrost.start(); // เริ่ม Timer ของมือ
               
                repaint(); // วาดใหม่ทุกครั้ง
            }
@@ -148,12 +149,12 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
                         characterY += 10;
         
                         // ตรวจสอบการชนกับมือเมื่อกำลังตกลงมา
-                        if (ishand && checkCollisionFromAbove()) {
-                            characterY = handY - characterHeight; // หยุดตัวละครบนมือของผี
+                        if (handgrost.ishand && checkCollisionFromAbove()) {
+                            characterY = handgrost.handY - characterHeight; // หยุดตัวละครบนมือของผี
                             isJumping = false;
                             jumpingUp = true; // รีเซ็ตทิศทางการกระโดด
 
-                            if (movecharacter < handX) { // If the character is on the left side of the hand
+                            if (movecharacter < handgrost.handX) { // If the character is on the left side of the hand
                                 movecharacter -= 100; // Bounce left
                                 characterY = 540;
                             } else { // If the character is on the right side of the hand
@@ -180,24 +181,6 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
             }    
         });
 
-       handTimer = new Timer(3000, new ActionListener() { 
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (timecount.isend) { // ตรวจสอบก่อนว่าหมดเวลาหรือยัง
-                    ishand = !ishand; // สลับสถานะการแสดงมือ
-                    if (ishand) {
-                        handX = random.nextInt(700) + 3; // กำหนดตำแหน่งมือใหม่แบบสุ่ม
-                    }
-                    // ตรวจสอบการชนเมื่อเลื่อนเมาส์
-                    if (ishand && checkCollision() && !showReadyImage) {
-                        System.out.println("Collision detected!"); // Debugging purpose
-                    }
-                    repaint(); // วาดใหม่ทุกครั้ง
-                } else {
-                    handTimer.stop(); // หยุด timer ถ้าเวลาหมด
-                }
-            }
-        });
         
     showTimerUP = new Timer(3000, new ActionListener() {
             @Override
@@ -259,8 +242,8 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
             String ScoreStr = Integer.toString(Score);
             g.drawString("  "+ScoreStr, 1110, 55);
         
-            if (ishand) {
-                g.drawImage(hand, handX-10, handY, handWidth, handHeight, this);
+            if (handgrost.ishand) {
+                g.drawImage(hand, handgrost.handX-10, handgrost.handY, handWidth, handHeight, this);
             }
         }
         
@@ -331,9 +314,9 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
     //เช็คโดนมือผี
     private boolean checkCollision() {
         // ขอบของมือ
-        int handLeft = handX;
-        int handRight = handX + handWidth;
-        int handTop = handY;
+        int handLeft = handgrost.handX;
+        int handRight = handgrost.handX + handWidth;
+        int handTop = handgrost.handY;
         // ขอบของตัวละคร
         int characterLeft = movecharacter ;
         int characterRight = movecharacter + getCharacterWidth();
@@ -358,7 +341,7 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
             }
             if (characterBottom >= handTop && characterBottom <= handTop + 10 && // ตัวละครอยู่ในระยะใกล้มือ
                 characterRight  - 125 > handLeft && characterLeft - 75 < handRight) { // ตัวละครอยู่ภายในขอบซ้ายขวาของมือ
-                    characterY = handY - characterHeight;
+                    characterY = handgrost.handY - characterHeight;
                     movecharacter += 100; // Bounce right
                     characterY = 540;
                     Score -= 70;
@@ -369,9 +352,9 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
     }
 
     private boolean checkCollisionFromAbove() {
-        int handTop = handY; // ขอบบนของมือ
-        int handLeft = handX;
-        int handRight = handX + handWidth;
+        int handTop = handgrost.handY; // ขอบบนของมือ
+        int handLeft = handgrost.handX;
+        int handRight = handgrost.handX + handWidth;
     
         int characterBottom = characterY + characterHeight; // ขอบล่างของตัวละคร
         int characterLeft = movecharacter;
@@ -508,7 +491,7 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
 
         // ตรวจสอบการชนเมื่อเลื่อนเมาส์
         if(!showReadyImage){
-            if (ishand && checkCollision() ) {
+            if (handgrost.ishand && checkCollision() ) {
             System.out.println("Collision detected!"); // Debugging purpose
             }
         }
