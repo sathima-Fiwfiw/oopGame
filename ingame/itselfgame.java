@@ -7,6 +7,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.io.File;
 import java.util.Random;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
@@ -20,6 +21,7 @@ public class itselfgame extends JFrame {
     String IP;
     PanelGame pInGame;
     tradetime timecount;
+    ThreadRain candyFallThread ;
 
     itselfgame(String characterID,String nameUser,String IP) {
         this.characterID = characterID;
@@ -29,8 +31,9 @@ public class itselfgame extends JFrame {
         setSize(1450, 840);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); 
-        timecount = new tradetime(0,3);
-        pInGame = new PanelGame(this,timecount);
+        timecount = new tradetime(0,50); 
+        candyFallThread = new ThreadRain(timecount);
+        pInGame = new PanelGame(this,timecount,candyFallThread);
         pInGame.addMouseMotionListener(pInGame);
         pInGame.addMouseListener(pInGame);
         add(pInGame);
@@ -44,6 +47,7 @@ public class itselfgame extends JFrame {
 class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
     itselfgame ingame;
     tradetime timecount;
+    ThreadRain candyFallThread ;
     Image[] character = new Image[5];
     Image bg, hand, timeUP , donut, pumpkin , ready,showwinner;
     int movecharacter = 0, characterY = 540;
@@ -59,36 +63,42 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
     int handWidth = 80, handHeight = 100;
     Random random = new Random();
     private Robot robot;
-    int Candy=5;   
+    int Candy=2;   
     Image[] CandyRain =new Image[Candy];
-    int[] Ranx =new int[Candy];
-    int[] Rany =new int[Candy];
-    double[] ranspeed=new  double[Candy];
-    boolean[] iscandy = new boolean[Candy];
     int Score = 0;
     int donutWidth = 50, donutHeight = 50;
-    int donutX,donutY = 70;
-    double donutSpeed;
-    boolean isdonut = true;
     int pumpkinWidth = 50, pumpkinHeight = 55;
-    int pumpkinX,pumpkinY = 70;
-    double pumpkinSpeed;
-    boolean ispumpkin= true;
     boolean showReadyImage = true;
     boolean showTimerUPimage = true;
     Image currentCharacter;
 
-    PanelGame(itselfgame ingame,tradetime timecount) {
+    PanelGame(itselfgame ingame,tradetime timecount , ThreadRain candyFallThread) {
         this.ingame = ingame;
         this.timecount = timecount;
+        this.candyFallThread = candyFallThread;
 
-        bg = Toolkit.getDefaultToolkit().getImage("C:/oopGame/ingame/bgingame.png");
-        hand = Toolkit.getDefaultToolkit().getImage("C:/oopGame/ingame/handgrost.png");
-        timeUP = Toolkit.getDefaultToolkit().getImage("C:/oopGame/ingame/time.png");
-        donut = Toolkit.getDefaultToolkit().getImage("C:/oopGame/imageRain/donut.png"); 
-        pumpkin = Toolkit.getDefaultToolkit().getImage("C:/oopGame/imageRain/pumpkin.png");
-        ready = Toolkit.getDefaultToolkit().getImage("C:/oopGame/ingame/ready.png");
-        showwinner = Toolkit.getDefaultToolkit().getImage("C:/oopGame/ingame/ShowScore.png");
+        bg = Toolkit.getDefaultToolkit().createImage(System.getProperty("user.dir") +
+        File.separator + "ingame" + File.separator + "bgingame.png");
+
+        hand = Toolkit.getDefaultToolkit().createImage(System.getProperty("user.dir") +
+        File.separator + "ingame" + File.separator + "handgrost.png");
+
+        timeUP = Toolkit.getDefaultToolkit().createImage(System.getProperty("user.dir") +
+        File.separator + "ingame" + File.separator + "time.png");
+
+        ready = Toolkit.getDefaultToolkit().createImage(System.getProperty("user.dir") +
+        File.separator + "ingame" + File.separator + "ready.png");
+
+        showwinner = Toolkit.getDefaultToolkit().createImage(System.getProperty("user.dir") +
+        File.separator + "ingame" + File.separator + "ShowScore.png");
+        
+        donut = Toolkit.getDefaultToolkit().createImage(System.getProperty("user.dir") +
+        File.separator + "imageRain" + File.separator + "donut.png");
+        
+        pumpkin  = Toolkit.getDefaultToolkit().createImage(System.getProperty("user.dir") +
+        File.separator + "imageRain" + File.separator + "pumpkin.png");
+
+       
 
         for (int i = 0; i < character.length; i++) {
             character[i] = new ImageIcon("C:/oopGame/imageip/" + (i + 1) + ".png").getImage();
@@ -96,23 +106,12 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
         
        for (int i = 0; i < CandyRain.length; i++) {
         CandyRain[i] = new ImageIcon("C:/oopGame/imageRain/" + ((i % 10) + 1) + ".png").getImage();
-
-           Ranx[i] =random.nextInt(1350)+5;
-           Rany[i] = 70;
-           ranspeed[i] = random.nextDouble(10.0)+4.0;
-
-           iscandy[i] = true;
+        candyFallThread.iscandy[i] = true;
        }
-       donutX =random.nextInt(1350)+5;
-       donutY = 70;
-       donutSpeed = random.nextDouble(6.0)+2.5;
 
-       pumpkinX =  random.nextInt(1350)+5;
-       pumpkinY = 70;
-       pumpkinSpeed = random.nextDouble(6.0)+2.5;
 
            // เริ่ม thread สำหรับการตกของลูกอม
-        ThreadRain candyFallThread = new ThreadRain(this,timecount);
+       // ThreadRain candyFallThread = new ThreadRain(this,timecount);
         
         currentCharacter = getCurrentCharacter();
         handX = random.nextInt(1200) + 10;
@@ -200,7 +199,7 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
             }
         });
         
-        showTimerUP = new Timer(3000, new ActionListener() {
+    showTimerUP = new Timer(3000, new ActionListener() {
             @Override
         public void actionPerformed(ActionEvent e) {
             showTimerUPimage = false;
@@ -208,7 +207,7 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
        }
     });
     showTimerUP.setRepeats(false); // ทำให้ Timer นี้ทำงานเพียงครั้งเดียว
-   // showTimerUP.start(); // เริ่มการทำงานของ Timer
+   
 
         try {
             robot = new Robot(); // สร้าง Robot หนึ่งตัวเพื่อควบคุมเมาส์
@@ -232,15 +231,15 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
        else{
             for(int i=0;i<Candy;i++)
             {
-                if (iscandy[i]) {
-                    g.drawImage(CandyRain[i],Ranx[i],Rany[i],candyWidth,candyHeight,this);
+                if (candyFallThread.iscandy[i]) {
+                    g.drawImage(CandyRain[i],candyFallThread.Ranx[i],candyFallThread.Rany[i],candyWidth,candyHeight,this);
                 }
             }
-            if (isdonut) {
-                g.drawImage(donut,donutX,donutY,donutWidth,donutHeight,this);
+            if (candyFallThread.isdonut) {
+                g.drawImage(donut, candyFallThread.donutX, candyFallThread.donutY, donutWidth, donutHeight, this);
             }
-            if (ispumpkin) {
-                g.drawImage(pumpkin,pumpkinX,pumpkinY,pumpkinWidth,pumpkinHeight,this);
+            if (candyFallThread.ispumpkin) {
+                g.drawImage(pumpkin,candyFallThread.pumpkinX, candyFallThread.pumpkinY, pumpkinWidth, pumpkinHeight, this);
             }
             g.drawImage(currentCharacter, movecharacter - getCharacterOffset(), characterY, getCharacterWidth(), characterHeight, this);
             Font font = new Font("Berlin sans FB Demi", Font.BOLD, 20); 
@@ -389,18 +388,18 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
     }
     //เช็คลูกอมโดนตัวละคร
     void checkCollectCandy(int index){
-        int candyBottom = Rany[index] + candyHeight;
-        int candyLeft = Ranx[index];
-        int candyRight = Ranx[index] + candyWidth;
+        int candyBottom = candyFallThread.Rany[index] + candyHeight;
+        int candyLeft = candyFallThread.Ranx[index];
+        int candyRight = candyFallThread.Ranx[index] + candyWidth;
         
         int characterLeft = movecharacter;
         int characterRight = movecharacter + getCharacterWidth();
         int characterTop = characterY;
     
         // ตรวจสอบว่าลูกอมชนกับตัวละครและยังอยู่ในสถานะที่สามารถเก็บได้อยู่
-        if (iscandy[index] && candyBottom >= characterTop && candyRight >= characterLeft - 75 && candyLeft <= characterRight - 125) {
+        if (candyFallThread.iscandy[index] && candyBottom >= characterTop && candyRight >= characterLeft - 75 && candyLeft <= characterRight - 125) {
             // ลูกอมชนกับตัวละคร
-            iscandy[index] = false; // เปลี่ยนสถานะลูกอมเพื่อไม่ให้ถูกเก็บซ้ำ
+            candyFallThread.iscandy[index] = false; // เปลี่ยนสถานะลูกอมเพื่อไม่ให้ถูกเก็บซ้ำ
             Score += 50; 
             //System.out.println("Collected candy at index: " + index);
             // เพิ่มคะแนนหรือจัดการการเก็บลูกอมที่นี่
@@ -408,16 +407,16 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
     }
     //เช็คโดนัทโดนตัวละคร
     void checkCollectDonut(){
-        int DonutBottom =  donutY + donutHeight;
-        int DonutLeft = donutX;
-        int DonutRight = donutX + donutWidth;
+        int DonutBottom =  candyFallThread.donutY + donutHeight;
+        int DonutLeft = candyFallThread.donutX;
+        int DonutRight = candyFallThread.donutX + donutWidth;
         
         int characterLeft = movecharacter;
         int characterRight = movecharacter + getCharacterWidth();
         int characterTop = characterY;
-        if (isdonut && DonutBottom >= characterTop && DonutRight >= characterLeft - 75 && DonutLeft <= characterRight - 125) {
+        if (candyFallThread.isdonut && DonutBottom >= characterTop && DonutRight >= characterLeft - 75 && DonutLeft <= characterRight - 125) {
            
-            isdonut = false; 
+            candyFallThread.isdonut = false; 
             Score += 200; 
            
         }
@@ -425,17 +424,17 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
     }
     //เช็คฝักทองโดนตัวละคร
     void checkCollectPumpkin(){
-        int pumpkinBottom =  pumpkinY + pumpkinHeight;
-        int pumpkintLeft = pumpkinX;
-        int pumpkinRight = pumpkinX + pumpkinWidth;
+        int pumpkinBottom =  candyFallThread.pumpkinY + pumpkinHeight;
+        int pumpkintLeft = candyFallThread.pumpkinX;
+        int pumpkinRight = candyFallThread.pumpkinX + pumpkinWidth;
         
         int characterLeft = movecharacter;
         int characterRight = movecharacter + getCharacterWidth();
         int characterTop = characterY;
 
-        if (ispumpkin && pumpkinBottom  >= characterTop && pumpkinRight >= characterLeft - 75 && pumpkintLeft<= characterRight - 125) {
+        if (candyFallThread.ispumpkin && pumpkinBottom  >= characterTop && pumpkinRight >= characterLeft - 75 && pumpkintLeft<= characterRight - 125) {
           
-            ispumpkin = false; 
+            candyFallThread.ispumpkin = false; 
             Score -= 150; 
         }
         
@@ -508,9 +507,12 @@ class PanelGame extends JPanel implements MouseMotionListener, MouseListener {
         }
 
         // ตรวจสอบการชนเมื่อเลื่อนเมาส์
-        if (ishand && checkCollision() && !showReadyImage) {
+        if(!showReadyImage){
+            if (ishand && checkCollision() ) {
             System.out.println("Collision detected!"); // Debugging purpose
+            }
         }
+        
         //เช็คตัวละครโดนลูกอม
         for(int i = 0; i < Candy; i++)
         {
