@@ -18,6 +18,7 @@ public class GameClient extends JFrame {
     private String serverIP; // Server IP address
     Image bg;
     Image[] character = new Image[5];
+    boolean isJumping = false;
 
     // Adjusted constructor to accept name, character code, and IP from Ipgame
     public GameClient(String characterCode, String playerName, String serverIP) {
@@ -35,6 +36,8 @@ public class GameClient extends JFrame {
 
         createAndShowGUI(); // สร้าง GUI และแสดง
         connectToServer(); // เชื่อมต่อกับเซิร์ฟเวอร์
+
+
     }
 
     private void createAndShowGUI() {
@@ -68,7 +71,6 @@ public class GameClient extends JFrame {
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        // Mouse motion listener to track mouse movement
         // Mouse motion listener to track mouse movement
         panel.addMouseMotionListener(new MouseMotionAdapter() {
             @Override
@@ -125,6 +127,18 @@ public class GameClient extends JFrame {
                 y = 540; // Position Y คงที่
                 sendPosition(); // ส่งตำแหน่งผู้เล่นไปยังเซิร์ฟเวอร์
                 panel.repaint();
+            }
+        });
+
+                // เพิ่ม mouseClicked() สำหรับการตรวจจับคลิกเมาส์
+        panel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (timecount.isend) {
+                    if (!isJumping) {
+                        isJumping = true; // กระโดดเมื่อไม่ได้อยู่ในสถานะการกระโดด
+                    }
+                }
             }
         });
     }
