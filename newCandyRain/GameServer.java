@@ -62,6 +62,7 @@ public class GameServer {
             }
         }
     }
+      
 
 
     private void startBroadcastingcandy() {
@@ -70,9 +71,11 @@ public class GameServer {
                 try {
                     Thread.sleep(20); // ส่งข้อมูลทุกวินาที
                    for(int i=0;i<threadRain.Candy;i++){
-                    broadcastCandyPosition(i,threadRain.Ranx[i],threadRain.Rany[i],threadRain.ranspeed[i]); // ส่งตำแหน่งลูกอมทุกวินาทีด้วย
-                   }
+                    broadcastCandyPosition(); // ส่งตำแหน่งลูกอมทุกวินาทีด้วย
                    
+                   }
+                   broadcastDonutPosition();
+                   broadcastPumpkinPosition();
                   
                 } catch (InterruptedException e) {
                     e.printStackTrace();
@@ -82,22 +85,44 @@ public class GameServer {
     }
 
     // ส่งตำแหน่งลูกอมไปยัง Client ทั้งหมด
-    private void broadcastCandyPosition(int index,int x,int y,double speed) {
+    private void broadcastCandyPosition() {
         synchronized (clientWriters) {
             for (PrintWriter clientOut : clientWriters) {
                 for ( int i = 0; i < threadRain.Candy; i++) {
                     String candyMessage = "candy," + i + "," + threadRain.Ranx[i] + "," + threadRain.Rany[i] + "," + threadRain.ranspeed[i];
                     clientOut.println(candyMessage);
                 }
-                // ส่งตำแหน่งและความเร็วของโดนัทและฟักทอง
-                String donutMessage = "donut," + threadRain.donutX + "," + threadRain.donutY + "," + threadRain.donutSpeed;
-                String pumpkinMessage = "pumpkin," + threadRain.pumpkinX + "," + threadRain.pumpkinY + "," + threadRain.pumpkinSpeed;
-                clientOut.println(donutMessage);
-                clientOut.println(pumpkinMessage);
+              
             }
         }
     }
-    
+                // ส่งตำแหน่งและความเร็วของโดนัทให้กับ Client ทั้งหมด
+        private void broadcastDonutPosition() {
+            synchronized (clientWriters) {
+                for (PrintWriter clientOut : clientWriters) {
+                    // สร้างข้อความสำหรับโดนัท
+                    String donutMessage = " ," + threadRain.donutX + "," + threadRain.donutY + "," + threadRain.donutSpeed;
+
+                    // ส่งข้อความไปยัง Client
+                    clientOut.println(donutMessage);
+                }
+            }
+        }
+
+        // ส่งตำแหน่งและความเร็วของฟักทองให้กับ Client ทั้งหมด
+        private void broadcastPumpkinPosition() {
+            synchronized (clientWriters) {
+                for (PrintWriter clientOut : clientWriters) {
+                    // สร้างข้อความสำหรับฟักทอง
+                    String pumpkinMessage = "  ," + threadRain.pumpkinX + "," + threadRain.pumpkinY + "," + threadRain.pumpkinSpeed;
+
+                    // ส่งข้อความไปยัง Client
+                    clientOut.println(pumpkinMessage);
+                }
+            }
+        }
+
+     
 
     private class ClientHandler extends Thread {
         private Socket socket;
