@@ -33,18 +33,20 @@ public class GameClient extends JFrame {
     private String playerName; // Name of this player
     private String characterCode; // Character code
     private String serverIP; // Server IP address
-    Image bg,timeUP;
+    Image bg, timeUP;
     Image[] character = new Image[5];
-    Image[] CandyRain ;
     boolean isJumping = false;
     Timer actionTimer;
     private int remainingMinutes;
     private int remainingSeconds;
-    private boolean remainisend = true;
-    int Candys = 10;
+    boolean remainEnd = true;
+    int Candys = 5;
+    Image[] Candy =new Image[Candys];
     int posicandyX[] =new int[Candys];
     int posicandyY[] =new int[Candys];
     double speedcandy[] =new double[Candys];
+    int indexcandy;
+    
 
     // Adjusted constructor to accept name, character code, and IP from Ipgame
     public GameClient(String characterCode, String playerName, String serverIP) {
@@ -57,21 +59,19 @@ public class GameClient extends JFrame {
                 File.separator + "ingame" + File.separator + "bgingame.png");
 
         for (int i = 0; i < character.length; i++) {
-            character[i] = new ImageIcon("C:/oopGame/imageip/" + (i + 1) + ".png").getImage();
+            character[i] = new ImageIcon("C:\\oopGame\\imageip/" + (i + 1) + ".png").getImage(); 
+        }
+        for (int i = 0; i < Candys; i++) {
+            Candy[i] = new ImageIcon("C:\\oopGame\\imageRain/" + ((i % 10) + 1)  + ".png").getImage(); 
         }
 
         timeUP = Toolkit.getDefaultToolkit().createImage(System.getProperty("user.dir") +
         File.separator + "ingame" + File.separator + "time.png");
 
-        for (int i = 0; i < Candys; i++) {
-            CandyRain[i] = new ImageIcon("C:/oopGame/imageRain/" + ((i % 10) + 1) + ".png").getImage();
-            //candyFallThread.iscandy[i] = true;
-           }
-
         createAndShowGUI(); // สร้าง GUI และแสดง
         connectToServer(); // เชื่อมต่อกับเซิร์ฟเวอร์
 
-        actionTimer = new Timer(10, new ActionListener() {
+        actionTimer = new Timer(15, new ActionListener() {
                boolean jumpingUp = true; // ทิศทางการกระโดด
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -107,12 +107,17 @@ public class GameClient extends JFrame {
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 // Draw the current player
-                Font font = new Font("Berlin sans FB Demi", Font.BOLD, 20); 
                 g.drawImage(bg, 0, 0, this);
                 g.drawImage(character[getCharacterIndex(characterCode)], movecharacter - getCharacterOffset(characterCode), characterY, getCharacterWidth(characterCode), 250, this); // วาดตัวผู้เล่น
                 g.setColor(Color.BLACK);
+                Font font = new Font("Berlin sans FB Demi", Font.BOLD, 20); 
                 g.setFont(font); 
                 g.drawString(playerName, movecharacter - getCharacterOffset(characterCode) + 50 , characterY - 20); // วาดชื่อผู้เล่นเหนือรูปตัวละคร
+            
+                  // วาดลูกอมที่ตำแหน่งที่ได้รับจากเซิร์ฟเวอร์
+                for (int i = 0; i < Candys; i++) {
+                    g.drawImage(Candy[i], posicandyX[i], posicandyY[i], 60, 35, this);
+                }
 
                 // วาดผู้เล่นคนอื่น
                 for (Map.Entry<String, PlayerPoint> entry : otherPlayers.entrySet()) {
@@ -121,26 +126,19 @@ public class GameClient extends JFrame {
 
                     Image otherCharacterImage = getCharacterImageBasedOnCode(p.characterCode); // ใช้ characterCode ของผู้เล่นอื่น
                     g.drawImage(otherCharacterImage, p.x - getCharacterOffset(p.characterCode), p.y, getCharacterWidth(p.characterCode), 250, this); // วาดตัวผู้เล่น
-                    
                     g.setFont(font); 
                     g.drawString(otherName, p.x - getCharacterOffset(p.characterCode) + 50, p.y - 20); // วาดชื่อผู้เล่นเหนือรูปตัวละคร
-                
-                    
                 }
-                // วาดลูกอมที่ตำแหน่งที่ได้รับจากเซิร์ฟเวอร์
-                for (int i = 0; i < Candys; i++) {
-                    g.drawImage(CandyRain[i], posicandyX[i], posicandyY[i], 60, 35, this);
-                }
-                
+
                 // Draw the current time
                 Font fonttime = new Font("Berlin sans FB Demi", Font.BOLD, 40); 
                 g.setFont(fonttime);
                 g.drawString(String.format("%02d:%02d", remainingMinutes, remainingSeconds), 300, 55);
 
-            if (!remainisend) {
+                if (!remainEnd) {
                     g.drawImage(timeUP, 320, 100, 800, 500, this);
                 }
-
+                repaint();
             }
         };
 
@@ -156,7 +154,7 @@ public class GameClient extends JFrame {
             public void mouseMoved(MouseEvent e) {
                 movecharacter = e.getX(); // Center the character on the mouse, using offset
 
-                // ตัวละคร c01 - เช็คขอบ
+            // ตัวละคร c01 - เช็คขอบ
             if ("c01".equals(characterCode)) {
                 if (movecharacter - 100 < 0) { // ขอบซ้าย
                     movecharacter = 100;
@@ -170,26 +168,26 @@ public class GameClient extends JFrame {
                 if (movecharacter - 80 < 0) { // ขอบซ้าย
                     movecharacter = 80;
                 }
-                if (movecharacter + 65 > panel.getWidth()) { // ขอบขวา
-                    movecharacter = panel.getWidth() - 65;
+                if (movecharacter + 70 > panel.getWidth()) { // ขอบขวา
+                    movecharacter = panel.getWidth() - 70;
                 }
             }
             // ตัวละคร c03 - เช็คขอบ
             else if ("c03".equals(characterCode)) {
-                if (movecharacter - 90 < 0) { // ขอบซ้าย
-                    movecharacter = 90;
+                if (movecharacter - 81 < 0) { // ขอบซ้าย
+                    movecharacter = 81;
                 }
-                if (movecharacter + 65 > panel.getWidth()) { // ขอบขวา
-                    movecharacter = panel.getWidth() - 65;
+                if (movecharacter + 67 > panel.getWidth()) { // ขอบขวา
+                    movecharacter = panel.getWidth() - 67;
                 }
             }
             // ตัวละคร c04 - เช็คขอบ
             else if ("c04".equals(characterCode)) {
-                if (movecharacter - 95 < 0) { // ขอบซ้าย
-                    movecharacter = 95;
+                if (movecharacter - 83 < 0) { // ขอบซ้าย
+                    movecharacter = 83;
                 }
-                if (movecharacter + 30 > panel.getWidth()) { // ขอบขวา
-                    movecharacter = panel.getWidth() - 30;
+                if (movecharacter + 45 > panel.getWidth()) { // ขอบขวา
+                    movecharacter = panel.getWidth() - 45;
                 }
             }
             // ตัวละคร c05 - เช็คขอบ
@@ -258,11 +256,9 @@ public class GameClient extends JFrame {
         out.println(playerName + "," + movecharacter + "," + characterY + "," + characterCode); // ส่งชื่อผู้เล่น ตำแหน่ง x, y และโค้ดตัวละคร
     }
 
-    private void updateTimerDisplay(int minutes, int seconds ,boolean isEnd) {
+    private void updateTimerDisplay(int minutes, int seconds) {
         this.remainingMinutes = minutes;
         this.remainingSeconds = seconds;
-        this.remainisend = isEnd;
-        panel.repaint();
     }
 
     private void updateCandyPosition(int x, int y,int index,double speed) {
@@ -272,6 +268,9 @@ public class GameClient extends JFrame {
         panel.repaint(); // Repaint the panel to update candy position
     }
 
+    private void updatetimeend(boolean isend){
+        this.remainEnd = isend;
+    }
     private void receivePositionUpdates() {
         try (BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
             String message;
@@ -288,15 +287,12 @@ public class GameClient extends JFrame {
                     otherPlayers.put(otherPlayerName, playerPoint); // เก็บข้อมูลผู้เล่นอื่นลงในแผนที่
                     panel.repaint(); // วาดใหม่เพื่ออัปเดตการแสดงผล
                 }
-               if (parts[0].equals("time")) {
-                    System.out.println("Time update received: " + parts[1] + ":" + parts[2] + ":" + parts[3]);
+                else if (parts[0].equals("time")) {
+                    // Update time
                     int minutes = Integer.parseInt(parts[1]);
                     int seconds = Integer.parseInt(parts[2]);
-                    boolean isEnd = Boolean.parseBoolean(parts[3]);
-                    updateTimerDisplay(minutes, seconds, isEnd); // Update the timer display
-                    panel.repaint();
-                }
-                if (parts[0].equals("candy")) {
+                    updateTimerDisplay(minutes, seconds); // Update the timer display
+                }  else if (parts[0].equals("candy")) {
                     // อัปเดตตำแหน่งและความเร็วลูกอมที่ได้รับจากเซิร์ฟเวอร์
                     int candyIndex = Integer.parseInt(parts[1]); // รับตำแหน่ง index ของลูกอม
                     int candyX = Integer.parseInt(parts[2]); // รับตำแหน่ง x
@@ -306,8 +302,12 @@ public class GameClient extends JFrame {
                     // อัปเดตตำแหน่งลูกอมในแผงหรือพื้นที่แสดงผล
                     updateCandyPosition(candyX, candyY, candyIndex,candySpeed);
                     panel.repaint();
+                } else if (parts[0].equals("timeend")) {
+                    // อัปเดตตำแหน่งและความเร็วลูกอมที่ได้รับจากเซิร์ฟเวอร์
+                    boolean isend = Boolean.parseBoolean(parts[1]); // รับตำแหน่ง index ของลูกอม
+                    updatetimeend(isend);
+                    panel.repaint();
                 }
-
                 panel.repaint(); 
             }
         } catch (IOException e) {
