@@ -34,17 +34,26 @@ public class GameClient extends JFrame {
     private String characterCode; // Character code
     private String serverIP; // Server IP address
     Image bg;
+    Image donutt;
+    Image pumpkinn;
     Image[] character = new Image[5];
     boolean isJumping = false;
     Timer actionTimer;
     private int remainingMinutes;
     private int remainingSeconds;
-    int Candys=15;
+    int Candys=20;
     Image[] Candy =new Image[Candys];
     int posicandyX[] =new int[Candys];
     int posicandyY[] =new int[Candys];
     double speedcandy[] =new double[Candys];
     int indexcandy;
+    int dountx;
+    int dounty;
+    double speedDonut;
+    int pumpkinx;
+    int pumpkiny;
+    double speedpumpkin;
+
     
 
     // Adjusted constructor to accept name, character code, and IP from Ipgame
@@ -61,8 +70,12 @@ public class GameClient extends JFrame {
             character[i] = new ImageIcon("D:\\week_server\\imagecharacter/" + (i + 1) + ".png").getImage();
         }
         for (int i = 0; i < Candys; i++) {
-            Candy[i] = new ImageIcon("D:\\week_server\\imageRain/" + (i + 1) + ".png").getImage();
+            Candy[i] = new ImageIcon("D:\\week_server\\imageRain/" + ((i % 10) + 1) + ".png").getImage();
         }
+
+        donutt = new ImageIcon("D:\\week_server\\imageRain\\donut.png").getImage();
+        pumpkinn = new ImageIcon("D:\\week_server\\imageRain\\pumpkin.png").getImage();
+        
 
         createAndShowGUI(); // สร้าง GUI และแสดง
         connectToServer(); // เชื่อมต่อกับเซิร์ฟเวอร์
@@ -110,8 +123,16 @@ public class GameClient extends JFrame {
             
                   // วาดลูกอมที่ตำแหน่งที่ได้รับจากเซิร์ฟเวอร์
                     for (int i = 0; i < Candys; i++) {
-                        g.drawImage(Candy[i], posicandyX[i], posicandyY[i], 100, 100, this);
+                        g.drawImage(  Candy[i], posicandyX[i], posicandyY[i], 40, 40, this);
                     }
+
+                        g.drawImage(donutt, dountx, dounty, 50, 50, this);
+                 
+                        g.drawImage(pumpkinn, pumpkinx, pumpkiny, 50, 50, this);
+
+                       
+                  
+                    
 
 
                 // วาดผู้เล่นคนอื่น
@@ -128,7 +149,7 @@ public class GameClient extends JFrame {
                 Font fonttime = new Font("Berlin sans FB Demi", Font.BOLD, 40); 
                 g.setFont(fonttime);
                 g.drawString(String.format("%02d:%02d", remainingMinutes, remainingSeconds), 300, 55);
-
+            
                 repaint();
             }
         };
@@ -259,6 +280,19 @@ public class GameClient extends JFrame {
         panel.repaint(); // Repaint the panel to update candy position
     }
 
+   
+    private void updateDonutPosition(int donutX, int donutY, double donutSpeed) {
+        this.dountx = donutX;
+        this.dounty = (int) (donutY + donutSpeed); // อัปเดตตำแหน่ง Y ของโดนัท
+        panel.repaint();
+    }
+    
+    private void updatePumpkinPosition(int pumpkinX, int pumpkinY, double pumpkinSpeed) {
+        this.pumpkinx = pumpkinX;
+        this.pumpkiny = (int) (pumpkinY + pumpkinSpeed); // อัปเดตตำแหน่ง Y ของฟักทอง
+        panel.repaint();
+    }
+
     private void receivePositionUpdates() {
         try (BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
             String message;
@@ -290,7 +324,22 @@ public class GameClient extends JFrame {
                     // อัปเดตตำแหน่งลูกอมในแผงหรือพื้นที่แสดงผล
                     updateCandyPosition(candyX, candyY, candyIndex,candySpeed);
                     panel.repaint();
+                  }  if (parts[0].equals(" ")) {
+                    int donutX = Integer.parseInt(parts[1]);
+                    int donutY = Integer.parseInt(parts[2]);
+                    double donutSpeed = Double.parseDouble(parts[3]);
+                    updateDonutPosition(donutX, donutY, donutSpeed);
+                    panel.repaint();
+                
+                }   if (parts[0].equals("  ")) {
+                    int pumpkinX = Integer.parseInt(parts[1]);
+                    int pumpkinY = Integer.parseInt(parts[2]);
+                    double pumpkinSpeed = Double.parseDouble(parts[3]);
+                    updatePumpkinPosition(pumpkinX, pumpkinY, pumpkinSpeed);
+                    panel.repaint();
                 }
+                
+                
                 panel.repaint(); 
             }
         } catch (IOException e) {
@@ -298,7 +347,10 @@ public class GameClient extends JFrame {
         }
     }
 
-     // เมธอดช่วยในการเลือกรูปตัวละครตามรหัส
+   
+
+
+    // เมธอดช่วยในการเลือกรูปตัวละครตามรหัส
      private Image getCharacterImageBasedOnCode(String code) {
         int index = getCharacterIndex(code);
         return character[index];
