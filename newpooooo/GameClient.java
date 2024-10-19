@@ -21,6 +21,7 @@ import javax.swing.JPanel;
 import javax.swing.Timer;
 import java.util.Map; 
 import java.awt.Font;
+import java.awt.Robot;
 
 public class GameClient extends JFrame {
     private static final int SERVER_PORT = 12345; // พอร์ตที่ใช้ในการเชื่อมต่อกับเซิร์ฟเวอร์
@@ -33,20 +34,25 @@ public class GameClient extends JFrame {
     private String playerName; // Name of this player
     private String characterCode; // Character code
     private String serverIP; // Server IP address
-    Image bg, timeUP;
+    Image bg, timeUP, hand ,Donut, Pumpkin;
     Image[] character = new Image[5];
     boolean isJumping = false;
     Timer actionTimer;
     private int remainingMinutes;
     private int remainingSeconds;
     boolean remainEnd = true;
+    boolean remainhand = true;
     int Candys = 5;
     Image[] Candy =new Image[Candys];
     int posicandyX[] =new int[Candys];
     int posicandyY[] =new int[Candys];
     double speedcandy[] =new double[Candys];
     int indexcandy;
-    
+    int handgrostX , handgrostY;
+    private Robot robot;
+    int dountx = 20 , dounty = 20;
+    int pumpkinx = 20, pumpkiny = 20;
+    int Score;
 
     // Adjusted constructor to accept name, character code, and IP from Ipgame
     public GameClient(String characterCode, String playerName, String serverIP) {
@@ -68,6 +74,16 @@ public class GameClient extends JFrame {
         timeUP = Toolkit.getDefaultToolkit().createImage(System.getProperty("user.dir") +
         File.separator + "ingame" + File.separator + "time.png");
 
+        hand = Toolkit.getDefaultToolkit().createImage(System.getProperty("user.dir") +
+        File.separator + "ingame" + File.separator + "handgrost.png");
+
+        Donut = Toolkit.getDefaultToolkit().createImage(System.getProperty("user.dir") +
+        File.separator + "imageRain" + File.separator + "donut.png");
+        
+        Pumpkin  = Toolkit.getDefaultToolkit().createImage(System.getProperty("user.dir") +
+        File.separator + "imageRain" + File.separator + "pumpkin.png");
+
+
         createAndShowGUI(); // สร้าง GUI และแสดง
         connectToServer(); // เชื่อมต่อกับเซิร์ฟเวอร์
 
@@ -83,6 +99,21 @@ public class GameClient extends JFrame {
                         }
                     } else {
                         characterY += 10; // Move down
+                         // ตรวจสอบการชนกับมือเมื่อกำลังตกลงมา
+
+                         if (remainhand && checkCollisionFromAbove()) {
+                            characterY = handgrostY - 250; // หยุดตัวละครบนมือของผี
+                            isJumping = false;
+                            jumpingUp = true; // รีเซ็ตทิศทางการกระโดด
+
+                            if (movecharacter < handgrostX) { // If the character is on the left side of the hand
+                                movecharacter -= 100; // Bounce left
+                                characterY = 540;
+                            } else { // If the character is on the right side of the hand
+                                movecharacter += 100; // Bounce right
+                                characterY = 540;
+                            }
+                        }
 
                         if (characterY >= 540) { // Landing on the ground
                             characterY = 540;
@@ -91,12 +122,25 @@ public class GameClient extends JFrame {
                         }
                     }
 
+                    for(int i = 0; i < Candys; i++){
+                        checkCollectCandy(i);
+                    }
+                checkCollectDonut();
+                checkCollectPumpkin();
+
                 }
+
                 sendPosition(); 
                 panel.repaint(); // Repaint the panel every tick
             }
         });
         actionTimer.start(); // Start the timer
+
+        try {
+            robot = new Robot(); // สร้าง Robot หนึ่งตัวเพื่อควบคุมเมาส์
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
     }
 
@@ -113,10 +157,20 @@ public class GameClient extends JFrame {
                 Font font = new Font("Berlin sans FB Demi", Font.BOLD, 20); 
                 g.setFont(font); 
                 g.drawString(playerName, movecharacter - getCharacterOffset(characterCode) + 50 , characterY - 20); // วาดชื่อผู้เล่นเหนือรูปตัวละคร
+                
+               
             
                   // วาดลูกอมที่ตำแหน่งที่ได้รับจากเซิร์ฟเวอร์
                 for (int i = 0; i < Candys; i++) {
                     g.drawImage(Candy[i], posicandyX[i], posicandyY[i], 60, 35, this);
+                }
+             
+                g.drawImage(Donut, dountx, dounty, 50, 50, this);
+                g.drawImage(Pumpkin,pumpkinx, pumpkiny, 50, 55, this);
+                
+
+                if (remainhand) {
+                    g.drawImage(hand, handgrostX - 10, handgrostY, 80, 100, this);
                 }
 
                 // วาดผู้เล่นคนอื่น
@@ -128,12 +182,16 @@ public class GameClient extends JFrame {
                     g.drawImage(otherCharacterImage, p.x - getCharacterOffset(p.characterCode), p.y, getCharacterWidth(p.characterCode), 250, this); // วาดตัวผู้เล่น
                     g.setFont(font); 
                     g.drawString(otherName, p.x - getCharacterOffset(p.characterCode) + 50, p.y - 20); // วาดชื่อผู้เล่นเหนือรูปตัวละคร
+                   
                 }
 
                 // Draw the current time
                 Font fonttime = new Font("Berlin sans FB Demi", Font.BOLD, 40); 
                 g.setFont(fonttime);
                 g.drawString(String.format("%02d:%02d", remainingMinutes, remainingSeconds), 300, 55);
+
+                String ScoreStr = Integer.toString(Score);
+                g.drawString("  "+ScoreStr, 1110, 55);
 
                 if (!remainEnd) {
                     g.drawImage(timeUP, 320, 100, 800, 500, this);
@@ -199,7 +257,19 @@ public class GameClient extends JFrame {
                     movecharacter = panel.getWidth() - 70;
                 }
             }
-              
+
+            if (remainhand && checkCollision() ) {
+                System.out.println("Collision detected!"); // Debugging purpose
+            }
+            //เช็คตัวละครโดนลูกอม
+            for(int i = 0; i < Candys; i++)
+            {
+                checkCollectCandy(i);
+            }
+
+            checkCollectDonut();
+            checkCollectPumpkin();
+                
                 sendPosition(); // ส่งตำแหน่งผู้เล่นไปยังเซิร์ฟเวอร์
                 panel.repaint();
             }
@@ -271,6 +341,27 @@ public class GameClient extends JFrame {
     private void updatetimeend(boolean isend){
         this.remainEnd = isend;
     }
+
+    private void updatehand(int handx , int handy){
+       this.handgrostX = handx;
+       this.handgrostY = handy;
+    }
+
+    private void updateIshand(boolean ishand){
+        this.remainhand = ishand;
+     }
+
+    private void updateDonutPosition(int donutX, int donutY, double donutSpeed) {
+        this.dountx = donutX;
+        this.dounty = (int) (donutY + donutSpeed); // อัปเดตตำแหน่ง Y ของโดนัท
+        panel.repaint();
+    }
+    
+    private void updatePumpkinPosition(int pumpkinX, int pumpkinY, double pumpkinSpeed) {
+        this.pumpkinx = pumpkinX;
+        this.pumpkiny = (int) (pumpkinY + pumpkinSpeed); // อัปเดตตำแหน่ง Y ของฟักทอง
+        panel.repaint();
+    }
     private void receivePositionUpdates() {
         try (BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
             String message;
@@ -292,7 +383,25 @@ public class GameClient extends JFrame {
                     int minutes = Integer.parseInt(parts[1]);
                     int seconds = Integer.parseInt(parts[2]);
                     updateTimerDisplay(minutes, seconds); // Update the timer display
-                }  else if (parts[0].equals("candy")) {
+                } else if (parts[0].equals("timeend")) {
+                  
+                    boolean isend = Boolean.parseBoolean(parts[1]); // รับตำแหน่ง index ของลูกอม
+                    updatetimeend(isend);
+                    panel.repaint();
+                }
+                else if (parts[0].equals("hand")) {
+                    
+                    int handx = Integer.parseInt(parts[1]);
+                    int handy = Integer.parseInt(parts[2]);
+                    updatehand(handx , handy);
+                    panel.repaint();
+                }else if (parts[0].equals("handend")) {
+                   
+                    boolean ishand = Boolean.parseBoolean(parts[1]);
+                    updateIshand(ishand);
+                    panel.repaint();
+                }
+                if (parts[0].equals("candy")) {
                     // อัปเดตตำแหน่งและความเร็วลูกอมที่ได้รับจากเซิร์ฟเวอร์
                     int candyIndex = Integer.parseInt(parts[1]); // รับตำแหน่ง index ของลูกอม
                     int candyX = Integer.parseInt(parts[2]); // รับตำแหน่ง x
@@ -302,10 +411,21 @@ public class GameClient extends JFrame {
                     // อัปเดตตำแหน่งลูกอมในแผงหรือพื้นที่แสดงผล
                     updateCandyPosition(candyX, candyY, candyIndex,candySpeed);
                     panel.repaint();
-                } else if (parts[0].equals("timeend")) {
+                } else if (parts[0].equals(" ")) {
                     // อัปเดตตำแหน่งและความเร็วลูกอมที่ได้รับจากเซิร์ฟเวอร์
-                    boolean isend = Boolean.parseBoolean(parts[1]); // รับตำแหน่ง index ของลูกอม
-                    updatetimeend(isend);
+                    int donutX = Integer.parseInt(parts[1]); // รับตำแหน่ง x
+                    int donutY = Integer.parseInt(parts[2]); // รับตำแหน่ง y
+                    double donutSpeed = Double.parseDouble(parts[3]); // รับความเร็วของลูกอม
+
+                    updateDonutPosition(donutX, donutY, donutSpeed);
+                    panel.repaint();
+                }else if (parts[0].equals("  ")) {
+                    // อัปเดตตำแหน่งและความเร็วลูกอมที่ได้รับจากเซิร์ฟเวอร์
+                    int pumpkinX = Integer.parseInt(parts[1]); // รับตำแหน่ง x
+                    int pumpkinY = Integer.parseInt(parts[2]); // รับตำแหน่ง y
+                    double pumpkinSpeed = Double.parseDouble(parts[3]); // รับความเร็วของลูกอม
+                    
+                    updatePumpkinPosition(pumpkinX, pumpkinY, pumpkinSpeed);
                     panel.repaint();
                 }
                 panel.repaint(); 
@@ -333,6 +453,134 @@ public class GameClient extends JFrame {
                 return 4;
             default:
                 return 0;
+        }
+    }
+
+     //เช็คโดนมือผี
+     private boolean checkCollision() {
+        // ขอบของมือ
+        int handLeft = handgrostX;
+        int handRight = handgrostX + 80;
+        int handTop = handgrostY;
+        // ขอบของตัวละคร
+        int characterLeft = movecharacter ;
+        int characterRight = movecharacter + getCharacterWidth(characterCode);
+        int characterBottom = characterY + 250 ;
+        
+                // ตรวจสอบการชนซ้ายขวา
+            if (characterRight - 115 > handLeft && characterLeft - 65 < handRight && characterBottom  > handTop) {
+                // ชนจากซ้ายไปขวา (ตัวละครเข้าไปด้านซ้ายของมือ)
+                if (characterRight - 115 > handLeft && characterLeft < handLeft) {
+                    movecharacter -= 100; // เลื่อนตัวละครออกทางซ้าย
+                    moveMouseWithCharacter(-100);
+                    Score -= 70;
+                } 
+                // ชนจากขวาไปซ้าย (ตัวละครเข้าไปด้านขวาของมือ)
+                else if (characterLeft - 65 < handRight && characterRight > handRight) {
+                    movecharacter += 100 ; // เลื่อนตัวละครออกทางขวา
+                    moveMouseWithCharacter(100);
+                    Score -= 70;
+                }
+               
+                return true; // มีการชน
+            }
+            if (characterBottom >= handTop && characterBottom <= handTop + 10 && // ตัวละครอยู่ในระยะใกล้มือ
+                characterRight  - 125 > handLeft && characterLeft - 75 < handRight) { // ตัวละครอยู่ภายในขอบซ้ายขวาของมือ
+                    characterY = handgrostY - 250;
+                    movecharacter += 100; // Bounce right
+                    characterY = 540;
+                    Score -= 70;
+                    return true;
+            }
+        
+        return false; // ไม่มีการชน
+    }
+
+     boolean checkCollisionFromAbove() {
+        int handTop = handgrostY; // ขอบบนของมือ
+        int handLeft = handgrostX;
+        int handRight = handgrostX + 80;
+    
+        int characterBottom = characterY + 250; // ขอบล่างของตัวละคร
+        int characterLeft = movecharacter;
+        int characterRight = movecharacter + getCharacterWidth(characterCode);
+    
+        // ตรวจสอบว่าตัวละครอยู่เหนือมือ และตกลงไปสัมผัสมือ
+        if (characterBottom >= handTop && characterBottom <= handTop + 10 && // ตัวละครอยู่ในระยะใกล้มือ
+            characterRight  - 125 > handLeft && characterLeft - 75 < handRight) { // ตัวละครอยู่ภายในขอบซ้ายขวาของมือ
+            Score -= 70;
+            return true;
+        }
+    
+        return false;
+    }
+
+     //เช็คลูกอมโดนตัวละคร
+     void checkCollectCandy(int index){
+        int candyBottom = posicandyY[index] + 35;
+        int candyLeft = posicandyX[index];
+        int candyRight =  posicandyX[index] + 60;
+        
+        int characterLeft = movecharacter;
+        int characterRight = movecharacter + getCharacterWidth(characterCode);
+        int characterTop = characterY;
+    
+        // ตรวจสอบว่าลูกอมชนกับตัวละครและยังอยู่ในสถานะที่สามารถเก็บได้อยู่
+        if (  candyBottom >= characterTop && candyRight >= characterLeft - 75 && candyLeft <= characterRight - 125) {
+            // ลูกอมชนกับตัวละคร
+            //candyFallThread.iscandy[index] = false; // เปลี่ยนสถานะลูกอมเพื่อไม่ให้ถูกเก็บซ้ำ
+            Score += 50; 
+            //System.out.println("Collected candy at index: " + index);
+            // เพิ่มคะแนนหรือจัดการการเก็บลูกอมที่นี่
+        }
+    }
+    //เช็คโดนัทโดนตัวละคร
+    void checkCollectDonut(){
+        int DonutBottom =  dounty + 50;
+        int DonutLeft = dountx;
+        int DonutRight = dountx + 50;
+        
+        int characterLeft = movecharacter;
+        int characterRight = movecharacter + getCharacterWidth(characterCode);
+        int characterTop = characterY;
+        if (DonutBottom >= characterTop && DonutRight >= characterLeft - 75 && DonutLeft <= characterRight - 125) {
+           
+            //candyFallThread.isdonut = false; 
+            Score += 200; 
+           
+        }
+
+    }
+    //เช็คฝักทองโดนตัวละคร
+    void checkCollectPumpkin(){
+        int pumpkinBottom =  pumpkiny + 55;
+        int pumpkintLeft = pumpkinx;
+        int pumpkinRight = pumpkinx + 50;
+        
+        int characterLeft = movecharacter;
+        int characterRight = movecharacter + getCharacterWidth(characterCode);
+        int characterTop = characterY;
+
+        if (pumpkinBottom  >= characterTop && pumpkinRight >= characterLeft - 75 && pumpkintLeft<= characterRight - 125) {
+          
+           // candyFallThread.ispumpkin = false; 
+           Score -= 150; 
+        }
+        
+    }
+
+
+     // ฟังก์ชันเลื่อนเคอร์เซอร์ตามตัวละคร
+     private void moveMouseWithCharacter(int offsetX) {
+        try {
+            // รับตำแหน่งปัจจุบันของเคอร์เซอร์
+            int currentMouseX = java.awt.MouseInfo.getPointerInfo().getLocation().x;
+            int currentMouseY = java.awt.MouseInfo.getPointerInfo().getLocation().y;
+
+            // เลื่อนเคอร์เซอร์ไปตามตำแหน่งใหม่ (แกน X เคลื่อนตาม offset)
+            robot.mouseMove(currentMouseX + offsetX, currentMouseY);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
