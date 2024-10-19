@@ -6,11 +6,12 @@ public class GameServer {
     private static final int SERVER_PORT = 12345;
     private static final Set<PrintWriter> clientWriters = new HashSet<>();
     tradetime timecount;
-    ThreadRain candythread;
+    ThreadRain threadRain; // เพิ่มการใช้งาน ThreadRain
+    
 
     GameServer(){
-        timecount = new tradetime(0,10); 
-        candythread = new ThreadRain(timecount);
+        timecount = new tradetime(0,50); 
+        threadRain = new ThreadRain(timecount); // เรียกใช้งาน ThreadRain
     }
 
     public static void main(String[] args) {
@@ -21,6 +22,7 @@ public class GameServer {
     public void startServer() {
         try (ServerSocket serverSocket = new ServerSocket(SERVER_PORT)) {
             boolean firstClientConnected = false;
+             // เริ่มการทำงานของลูกอม
             while (true) {
                 new ClientHandler(serverSocket.accept()).start();
 
@@ -28,67 +30,87 @@ public class GameServer {
                 if (!firstClientConnected) {
                     timecount.startdown(); // เริ่มนับถอยหลัง
                     startBroadcastingTime();
-                    startBroadcastingCandy();
-                      candythread.start();
+                    startBroadcastingcandy();
+                    threadRain.start();
                     firstClientConnected = true; // ตั้งค่าเป็น true หลังจาก client แรกเชื่อมต่อ
                 }
-
-                
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-        private void startBroadcastingTime() {
-            new Thread(() -> {
-                while (timecount.isend) {
-                    try {
-                        Thread.sleep(1000); // ส่งข้อมูลทุกวินาที
-                        broadcastTime(timecount.minutes, timecount.seconds ,timecount.isend);
-                        System.out.println("Broadcasting time: " + timecount.minutes + "m " + timecount.seconds + "s" + timecount.isend);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }).start();
-        }
-    
-        private void broadcastTime(int minutes, int seconds , boolean isend) {
-            String timeMessage = "time" + "," + minutes + "," + seconds + "," + isend;
-            synchronized (clientWriters) {
-                for (PrintWriter clientOut : clientWriters) {
-                    clientOut.println(timeMessage);
+
+    private void startBroadcastingTime() {
+        new Thread(() -> {
+            while (timecount.isend) {
+                try {
+                    Thread.sleep(1000); // ส่งข้อมูลทุกวินาที
+                    broadcastTime(timecount.minutes, timecount.seconds);
+               
+                    System.out.println("Broadcasting time: " + timecount.minutes + "m " + timecount.seconds + "s");
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
             }
-        }
 
-        private void startBroadcastingCandy() {
-            new Thread(() -> {
-                while (timecount.isend) {
-                    try {
-                        Thread.sleep(20); // ส่งข้อมูลทุกวินาที
-                        for(int i = 0; i < candythread.Candy; i++){
-                            broadcastCandy(i,candythread.Ranx[i],candythread.Rany[i],candythread.ranspeed[i]); 
-                        }
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }).start();
-        }
+            broadcastTimeEnd(timecount.isend);
+
+        }).start();
+    }
     
-        private void broadcastCandy(int index, int Ranx , int Rany , double Candy) {
-            synchronized (clientWriters) {
-                for (PrintWriter clientOut : clientWriters) {
-                    for ( int i = 0; i < candythread.Candy; i++) {
-                        String candyMessage = "candy" + "," + i + "," + candythread.Ranx[i] + "," + candythread.Rany[i] + "," + candythread.ranspeed[i];
-                        clientOut.println(candyMessage);
-                    }
-                }
+    private void broadcastTime(int minutes, int seconds) {
+        String timeMessage = "time," + minutes + "," + seconds;
+        synchronized (clientWriters) {
+            for (PrintWriter clientOut : clientWriters) {
+                clientOut.println(timeMessage);
             }
         }
+    }
+
+    private void broadcastTimeEnd(boolean isend) {
+        String timeendMessage = "timeend," + isend;
+        synchronized (clientWriters) {
+            for (PrintWriter clientOut : clientWriters) {
+                clientOut.println(timeendMessage);
+            }
+        }
+    }
 
 
+    private void startBroadcastingcandy() {
+        new Thread(() -> {
+            while (timecount.isend) {
+                try {
+                    Thread.sleep(20); // ส่งข้อมูลทุกวินาที
+                   for(int i=0;i<threadRain.Candy;i++){
+                    broadcastCandyPosition(i,threadRain.Ranx[i],threadRain.Rany[i],threadRain.ranspeed[i]); // ส่งตำแหน่งลูกอมทุกวินาทีด้วย
+                   }
+                   
+                  
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+    }
+
+    // ส่งตำแหน่งลูกอมไปยัง Client ทั้งหมด
+    private void broadcastCandyPosition(int index,int x,int y,double speed) {
+        synchronized (clientWriters) {
+            for (PrintWriter clientOut : clientWriters) {
+                for ( int i = 0; i < threadRain.Candy; i++) {
+                    String candyMessage = "candy," + i + "," + threadRain.Ranx[i] + "," + threadRain.Rany[i] + "," + threadRain.ranspeed[i];
+                    clientOut.println(candyMessage);
+                }
+                // ส่งตำแหน่งและความเร็วของโดนัทและฟักทอง
+                String donutMessage = "donut," + threadRain.donutX + "," + threadRain.donutY + "," + threadRain.donutSpeed;
+                String pumpkinMessage = "pumpkin," + threadRain.pumpkinX + "," + threadRain.pumpkinY + "," + threadRain.pumpkinSpeed;
+                clientOut.println(donutMessage);
+                clientOut.println(pumpkinMessage);
+            }
+        }
+    }
+    
 
     private class ClientHandler extends Thread {
         private Socket socket;
@@ -141,7 +163,6 @@ public class GameServer {
                 }
             }
         }
-
 
         private void broadcastPosition() {
             synchronized (clientWriters) {
