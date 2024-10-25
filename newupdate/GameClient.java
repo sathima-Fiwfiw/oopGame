@@ -391,7 +391,7 @@ public class GameClient extends JFrame {
     }
 
     private void sendPosition() {
-        out.println(playerName + "," + movecharacter + "," + characterY + "," + characterCode); // ส่งชื่อผู้เล่น ตำแหน่ง x, y และโค้ดตัวละคร
+        out.println("player," + playerName + "," + movecharacter + "," + characterY + "," + characterCode); // ส่งชื่อผู้เล่น ตำแหน่ง x, y และโค้ดตัวละคร
     }
 
     public void sendCandyCollisionToServer(int index) {
@@ -450,11 +450,11 @@ public class GameClient extends JFrame {
             String message;
             while ((message = in.readLine()) != null) {
                 String[] parts = message.split(","); // แยกข้อมูลที่ได้รับเป็นส่วนๆ
-                if (parts.length == 4) {
-                    String otherPlayerName = parts[0];
-                    int otherX = Integer.parseInt(parts[1]);
-                    int otherY = Integer.parseInt(parts[2]);
-                    String otherCharacterCode = parts[3];
+                if (parts[0].equals("player")) {
+                    String otherPlayerName = parts[1];
+                    int otherX = Integer.parseInt(parts[2]);
+                    int otherY = Integer.parseInt(parts[3]);
+                    String otherCharacterCode = parts[4];
 
                     // อัปเดตตำแหน่งของผู้เล่นคนอื่น
                     PlayerPoint playerPoint = new PlayerPoint(otherX, otherY, otherCharacterCode);
@@ -547,6 +547,7 @@ public class GameClient extends JFrame {
                     this.winnerName = winnerName; 
                     this.winnerScore = winnerScore;
                     this.winnerCharacterCode = winnerCharacterCode;
+                    System.out.println("Current winner is " + winnerName + " with score " + winnerScore + " and character " + winnerCharacterCode);
                 }
                 panel.repaint(); 
             }

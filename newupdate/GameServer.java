@@ -13,7 +13,7 @@ public class GameServer {
 
     GameServer(){
         ready = new showReady();
-        timecount = new tradetime(0,5); 
+        timecount = new tradetime(0,15); 
         threadRain = new ThreadRain(timecount); // เรียกใช้งาน ThreadRain
         handthread = new ThreadHand(timecount);
     }
@@ -293,11 +293,11 @@ public class GameServer {
                 String message;
                 while ((message = in.readLine()) != null) {
                     String[] parts = message.split(",");
-                    if (parts.length == 4) {
-                        playerName = parts[0];
-                        x = Integer.parseInt(parts[1]);
-                        y = Integer.parseInt(parts[2]);
-                        characterCode = parts[3];
+                    if (parts[0].equals("player")) {
+                        playerName = parts[1];
+                        x = Integer.parseInt(parts[2]);
+                        y = Integer.parseInt(parts[3]);
+                        characterCode = parts[4];
                         broadcastPosition();
                     }else if (parts[0].equals("CANDY_COLLISION")) {
                    
@@ -308,10 +308,6 @@ public class GameServer {
                     }else if (parts[0].equals("PUMPKIN_COLLISION")) {
                         broadcastPumpkinCollision();
                     }else if (parts[0].equals("SCORE")) {
-                        if (parts.length < 4) {
-                            System.out.println("Invalid SCORE message received: " + message);
-                            return; // คืนค่าหรือออกจากฟังก์ชัน
-                        }
                     
                         String PlayerName2 = parts[1];
                         String CharacterCode2 = parts[2];
@@ -347,7 +343,7 @@ public class GameServer {
         private void broadcastPosition() {
             synchronized (clientWriters) {
                 for (PrintWriter writer : clientWriters) {
-                    writer.println(playerName + "," + x + "," + y + "," + characterCode);
+                    writer.println("player," + playerName + "," + x + "," + y + "," + characterCode);
                 }
             }
         }
