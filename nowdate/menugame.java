@@ -4,7 +4,6 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
@@ -12,7 +11,6 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import javax.sound.sampled.*;
 
 class menugame extends JFrame {
     panelMenu panel = new panelMenu(this);
@@ -108,7 +106,7 @@ class panelMenu extends JPanel {
             e.printStackTrace();
         }
     }
-
+//เล่นเพลงไปเรื่อยๆจนกว่าจะปิดเฟรมเอง
     public void stopBackgroundMusic() {
         if (backgroundMusic != null && backgroundMusic.isRunning()) {
             backgroundMusic.stop();
