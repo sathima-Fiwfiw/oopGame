@@ -69,7 +69,9 @@ public class WaitingRoom extends JFrame {
 
     private void loadCharacterImages() {
         for (int i = 0; i < characters.length; i++) {
-            Image originalImage = new ImageIcon("C:\\oopGame\\imageip/" + (i + 1) + ".png").getImage();
+            String imagePath = System.getProperty("user.dir") + File.separator + "imageip" + File.separator + (i + 1) + ".png";
+            // โหลดภาพด้วย Toolkit
+            Image originalImage = Toolkit.getDefaultToolkit().createImage(imagePath);
             int newWidth = 250;
             int newHeight = 300;
             characters[i] = originalImage.getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH);
@@ -188,8 +190,7 @@ public class WaitingRoom extends JFrame {
             try {
                 String message;
                 while ((message = in.readLine()) != null) {
-                    if (message.contains("has joined")) {
-                        String[] playerInfo = message.replace("has joined", "").split("Character: ");
+                        String[] playerInfo =  message.split(",");
                         if (playerInfo.length == 2) {
                             String playerName = playerInfo[0].trim();
                             String characterCode = playerInfo[1].trim();
@@ -197,12 +198,6 @@ public class WaitingRoom extends JFrame {
                         } else {
                             System.out.println("Invalid player info format: " + message);
                         }
-                    } else {
-                        System.out.println("Received message: " + message);
-                        if (message.startsWith("Game")) {
-                            JOptionPane.showMessageDialog(WaitingRoom.this, message);
-                        }
-                    }
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -218,16 +213,5 @@ public class WaitingRoom extends JFrame {
             ingame.setVisible(true);
             dispose(); // ปิดหน้ารอ WaitingRoom
         }
-    }
-
-    public static void main(String[] args) {
-        String playerName = "momo";  // Replace with actual name
-        String playerIP = "192.168.0.100";  // Replace with actual IP
-        String characterID = "c05";  // Replace with actual character code
-
-        SwingUtilities.invokeLater(() -> {
-            WaitingRoom waitingRoom = new WaitingRoom(playerName, playerIP, characterID);
-            waitingRoom.setVisible(true);
-        });
     }
 }
