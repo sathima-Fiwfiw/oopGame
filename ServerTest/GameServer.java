@@ -318,10 +318,11 @@ public void addNewPlayer(String playerName, String characterID, PrintWriter newP
             }
         }
         
-        private void broadcaststart(){
-            synchronized (clientWriters) {
-                for (PrintWriter clientOut : clientWriters) {
-                    clientOut.println("starting,"); // ส่งคำสั่งให้ทุกคนเริ่มเกมพร้อมกัน
+       / ฟังก์ชันสำหรับเริ่มเกม
+        private void broadcastStart() {
+            synchronized (players) {
+                for (Player player : players) {
+                    player.getOutput().println("starting,"); // ส่งคำสั่งให้ผู้เล่นทุกคนเริ่มเกมพร้อมกัน
                 }
             }
         }
