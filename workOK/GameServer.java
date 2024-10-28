@@ -335,7 +335,12 @@ public class GameServer {
                 // เพิ่มผู้เล่นด้วยรหัสตัวละครที่เลือก
                 playerCharacters.put(playerName, characterIndex);
                 sendPlayerList(out); // ส่งข้อมูลผู้เล่นคนอื่นให้ผู้เล่นใหม่
-        
+
+                synchronized (clientWriters) {
+                    clientWriters.add(out);
+                    playerNames.add(playerName);
+                }
+                
                 // แจ้งให้ผู้เล่นคนอื่นรู้ว่าเข้ามาแล้ว
                 broadcast("waitplay,"+playerName + "," + characterCode);
         
