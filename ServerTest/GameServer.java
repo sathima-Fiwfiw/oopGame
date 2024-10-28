@@ -320,12 +320,18 @@ public void addNewPlayer(String playerName, String characterID, PrintWriter newP
         
        / ฟังก์ชันสำหรับเริ่มเกม
         private void broadcastStart() {
-            synchronized (players) {
-                for (Player player : players) {
-                    player.getOutput().println("starting,"); // ส่งคำสั่งให้ผู้เล่นทุกคนเริ่มเกมพร้อมกัน
+        synchronized (players) {
+            System.out.println("Broadcasting start to " + players.size() + " players.");
+            for (Player player : players) {
+                if (player.getOutput() != null) {
+                    player.getOutput().println("starting,");
+                    System.out.println("Sent 'starting,' to " + player.getName());
+                } else {
+                    System.out.println("Output for player " + player.getName() + " is null.");
                 }
             }
         }
+    }
 
 
     
