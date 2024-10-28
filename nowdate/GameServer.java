@@ -17,7 +17,7 @@ public class GameServer {
 
     GameServer(){
         ready = new showReady();
-        timecount = new tradetime(0,5); 
+        timecount = new tradetime(0,50); 
         threadRain = new ThreadRain(timecount); // เรียกใช้งาน ThreadRain
         handthread = new ThreadHand(timecount);
     }
@@ -295,8 +295,6 @@ public class GameServer {
         private Socket socket;
         private PrintWriter out;
         private String playerName;
-        private String characterCode;
-        private int x, y;
 
         public ClientHandler(Socket socket) {
             this.socket = socket;
@@ -331,7 +329,7 @@ public class GameServer {
                 sendPlayerList(out); // ส่งข้อมูลผู้เล่นคนอื่นให้ผู้เล่นใหม่
         
                 // แจ้งให้ผู้เล่นคนอื่นรู้ว่าเข้ามาแล้ว
-                broadcast(playerName + " has joined. Character: " + characterCode);
+                broadcast(playerName + "," + characterCode);
         
                 String message;
                 while ((message = in.readLine()) != null) {
@@ -339,11 +337,11 @@ public class GameServer {
                     String[] parts = message.split(",");
                     
                  if (parts[0].equals("player")) {
-                        playerName = parts[1];
-                        x = Integer.parseInt(parts[2]);
-                        y = Integer.parseInt(parts[3]);
-                        characterCode = parts[4];
-                        broadcastPosition();
+                        String playerNamestart = parts[1];
+                        int x = Integer.parseInt(parts[2]);
+                        int y = Integer.parseInt(parts[3]);
+                        String characterCodestart = parts[4];
+                        broadcastPosition(playerNamestart,x,y,characterCodestart);
         
                     } else if (parts[0].equals("CANDY_COLLISION")) {
                         int index = Integer.parseInt(parts[1]);
@@ -405,10 +403,10 @@ public class GameServer {
             }
         }
 
-        private void broadcastPosition() {
+        private void broadcastPosition(String playerNamestart,int x, int y, String characterCodestart) {
             synchronized (clientWriters) {
                 for (PrintWriter writer : clientWriters) {
-                    writer.println("player," + playerName + "," + x + "," + y + "," + characterCode);
+                    writer.println("player," + playerNamestart + "," + x + "," + y + "," + characterCodestart);
                 }
             }
         }
