@@ -408,7 +408,7 @@ public class GameServer {
         private void sendPlayerList(PrintWriter out) {
             for (String playerName : playerNames) {
                 int characterIndex = playerCharacters.get(playerName);
-                out.println(playerName + " has joined. Character: c0" + (characterIndex + 1));
+                out.println("waitplay," + playerName + "," +  (characterIndex + 1));
             }
         }
 
