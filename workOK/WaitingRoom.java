@@ -194,13 +194,9 @@ public class WaitingRoom extends JFrame {
                 while ((message = in.readLine()) != null) {
                         String[] playerInfo =  message.split(",");
                         if (playerInfo[0].equals("waitplay")) { 
-                                // รับข้อมูลผู้เล่นทั้งหมดในห้อง และเพิ่มลงใน ArrayList
-                            for (int i = 1; i < playerInfo.length; i += 2) {
-                                String playerName = playerInfo[i].trim();
-                                String characterCode = playerInfo[i + 1].trim();
+                                String playerName = playerInfo[1].trim();
+                                String characterCode = playerInfo[2].trim();
                                 addPlayer(playerName, characterCode);
-
-                            }
                         } 
                         else if (playerInfo[0].equals("starting")){
                             GameClient ingame = new GameClient(characterID, playerName, playerIP);
