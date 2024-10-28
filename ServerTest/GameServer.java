@@ -17,7 +17,6 @@ public class GameServer {
     String characterCodewait;
 
     GameServer(){
-        ready = new showReady();
         timecount = new tradetime(0,50); 
         threadRain = new ThreadRain(timecount); // เรียกใช้งาน ThreadRain
         handthread = new ThreadHand(timecount);
@@ -97,6 +96,7 @@ public void addNewPlayer(String playerName, String characterID, PrintWriter newP
         }
     }
     private void startBroadcastingReady() {
+        ready = new showReady();
         ready.start();  // เริ่มการทำงานของเธรดที่แสดง Ready
     
         new Thread(() -> {
