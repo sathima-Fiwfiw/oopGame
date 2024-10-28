@@ -329,7 +329,7 @@ public class GameServer {
                 sendPlayerList(out); // ส่งข้อมูลผู้เล่นคนอื่นให้ผู้เล่นใหม่
         
                 // แจ้งให้ผู้เล่นคนอื่นรู้ว่าเข้ามาแล้ว
-                broadcast(playerName + "," + characterCode);
+                broadcast("waitplay,"+playerName + "," + characterCode);
         
                 String message;
                 while ((message = in.readLine()) != null) {
@@ -369,7 +369,7 @@ public class GameServer {
                     } else if (message.equalsIgnoreCase("/start")) {
                         // เริ่มเกม
                         startGame();
-                        broadcast("Game is starting!");
+                        broadcast("starting,");
                         break;
                     }
                 }

@@ -191,12 +191,15 @@ public class WaitingRoom extends JFrame {
                 String message;
                 while ((message = in.readLine()) != null) {
                         String[] playerInfo =  message.split(",");
-                        if (playerInfo.length == 2) {
-                            String playerName = playerInfo[0].trim();
-                            String characterCode = playerInfo[1].trim();
+                        if (playerInfo[0].equals("waitplay")) { 
+                            String playerName = playerInfo[1].trim();
+                            String characterCode = playerInfo[2].trim();
                             addPlayer(playerName, characterCode);
-                        } else {
-                            System.out.println("Invalid player info format: " + message);
+                        } 
+                        else if (playerInfo[0].equals("starting")){
+                            GameClient ingame = new GameClient(characterID, playerName, playerIP);
+                            ingame.setVisible(true);
+                            dispose(); // ปิดหน้ารอ WaitingRoom
                         }
                 }
             } catch (IOException e) {
