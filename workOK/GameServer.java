@@ -287,6 +287,14 @@ public class GameServer {
                 }
             }
         }
+        
+        private void broadcaststart(){
+            synchronized (clientWriters) {
+                for (PrintWriter clientOut : clientWriters) {
+                    clientOut.println("starting,"); // ส่งคำสั่งให้ทุกคนเริ่มเกมพร้อมกัน
+                }
+            }
+        }
 
 
     
@@ -369,8 +377,7 @@ public class GameServer {
                     } else if (message.equalsIgnoreCase("/start")) {
                         // เริ่มเกม
                         startGame();
-                        broadcast("starting,");
-                        break;
+                        broadcaststart();
                     }
                 }
             } catch (IOException e) {
@@ -395,6 +402,8 @@ public class GameServer {
                 writer.println(message);
             }
         }
+
+        
 
         private void sendPlayerList(PrintWriter out) {
             for (String playerName : playerNames) {

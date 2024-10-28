@@ -159,10 +159,12 @@ public class WaitingRoom extends JFrame {
             int characterHeight = 250;
             int gap = 100;
 
+               // Debug: แสดงข้อมูลผู้เล่นทั้งหมดใน console
+           
             for (int i = 0; i < playerNames.size(); i++) {
                 String playerName = playerNames.get(i);
                 Image characterImage = playerCharacters.get(i);
-
+                
                 Font font = new Font("Berlin sans FB Demi", Font.BOLD, 20);
                 g.setFont(font);
 
@@ -192,15 +194,21 @@ public class WaitingRoom extends JFrame {
                 while ((message = in.readLine()) != null) {
                         String[] playerInfo =  message.split(",");
                         if (playerInfo[0].equals("waitplay")) { 
-                            String playerName = playerInfo[1].trim();
-                            String characterCode = playerInfo[2].trim();
-                            addPlayer(playerName, characterCode);
+                                // รับข้อมูลผู้เล่นทั้งหมดในห้อง และเพิ่มลงใน ArrayList
+                            for (int i = 1; i < playerInfo.length; i += 2) {
+                                String playerName = playerInfo[i].trim();
+                                String characterCode = playerInfo[i + 1].trim();
+                                addPlayer(playerName, characterCode);
+
+                            }
                         } 
                         else if (playerInfo[0].equals("starting")){
                             GameClient ingame = new GameClient(characterID, playerName, playerIP);
                             ingame.setVisible(true);
                             dispose(); // ปิดหน้ารอ WaitingRoom
                         }
+                        revalidate();
+                        repaint();
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -212,9 +220,6 @@ public class WaitingRoom extends JFrame {
         @Override
         public void actionPerformed(ActionEvent e) {
             out.println("/start");
-            GameClient ingame = new GameClient(characterID, playerName, playerIP);
-            ingame.setVisible(true);
-            dispose(); // ปิดหน้ารอ WaitingRoom
         }
     }
 }
